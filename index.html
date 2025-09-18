@@ -2,106 +2,291 @@
 <html lang="tr">
 <head>
   <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>BBO — Check-in</title>
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
+  <title>Bir Bulut Olsam — Etkinlik Check-in</title>
+  <meta name="theme-color" content="#5B8DEF" />
   <style>
-    body { font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif; margin: 0; background: #f6f7fb; }
-    .wrap { max-width: 560px; margin: 40px auto; background: #fff; border-radius: 16px; padding: 24px; box-shadow: 0 6px 24px rgba(0,0,0,0.07); }
-    h1 { font-size: 1.25rem; margin: 0 0 12px; }
-    label { display:block; font-size: 0.95rem; margin: 14px 0 6px; }
-    input, select, button { width: 100%; padding: 12px; border: 1px solid #d8dbe3; border-radius: 10px; font-size: 1rem; }
-    button { cursor: pointer; border: 0; background: #4f46e5; color: #fff; font-weight: 600; margin-top: 14px; }
-    button:disabled { opacity: .6; cursor: not-allowed; }
-    .row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
-    .help { font-size: .9rem; color:#5b6171; margin-top: 6px; }
-    .status { margin-top: 14px; font-size: .95rem; }
-    .ok { color:#0f766e; }
-    .err { color:#b91c1c; }
-    .kvkk { display:flex; gap:10px; align-items:flex-start; margin-top: 10px; }
-    .kvkk input { width: auto; }
-    .brand { display:flex; align-items:center; gap:10px; margin-bottom: 12px; color:#334155; }
-    .brand .dot { width:10px;height:10px;border-radius:50%;background:#60a5fa; }
+    :root{
+      --bg:#F4F7FF;
+      --card:#FFFFFF;
+      --primary:#5B8DEF;      /* bulut mavi */
+      --primary-700:#355CD6;
+      --accent:#8EE1F7;       /* açık turkuaz */
+      --ok:#0f766e;
+      --err:#b91c1c;
+      --text:#1f2937;
+      --muted:#64748b;
+      --shadow: 0 10px 30px rgba(43,78,255,.12);
+      --radius:18px;
+    }
+    * { box-sizing: border-box; }
+    html,body { margin:0; padding:0; background: radial-gradient(1200px 600px at 80% -10%, #dbeafe 0%, transparent 60%), var(--bg); color:var(--text); font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Arial, "Apple Color Emoji","Segoe UI Emoji"; }
+    .wrap { max-width: 720px; margin: min(6vh,48px) auto; padding: 16px; }
+    .card {
+      background: var(--card);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      padding: clamp(18px,2.8vw,28px);
+      overflow: hidden;
+      position: relative;
+      border: 1px solid #e5e7eb;
+    }
+    .brand { display:flex; align-items:center; gap:12px; margin-bottom: 8px; }
+    .logo {
+      width: 44px; height:44px; border-radius: 12px;
+      background: linear-gradient(135deg, var(--primary), var(--accent));
+      position: relative; box-shadow: 0 6px 18px rgba(91,141,239,.35);
+    }
+    .logo:before, .logo:after{
+      content:""; position:absolute; background:#fff; border-radius: 999px; opacity: .9;
+    }
+    .logo:before{ width:18px; height:18px; left:8px; top:14px; }
+    .logo:after{ width:26px; height:26px; left:18px; top:8px; }
+    h1{ font-size: clamp(1.2rem, 1.1rem + 1.2vw, 1.8rem); margin:6px 0 2px; }
+    .sub{ color: var(--muted); font-size: .95rem; margin:0 0 14px; }
+
+    label{ display:block; font-weight:600; margin: 14px 0 8px; }
+    select, input[type="text"], input[type="tel"]{
+      width:100%; padding:14px 12px; border:1px solid #d7dce7; border-radius: 12px; font-size:1rem; outline: none; background:#fff;
+    }
+    select:focus, input:focus{ border-color: var(--primary); box-shadow: 0 0 0 3px rgba(91,141,239,.18); }
+
+    .grid{ display:grid; grid-template-columns: 1fr 1fr; gap:12px; }
+    @media (max-width:640px){ .grid{ grid-template-columns:1fr; } }
+
+    .kvkk-wrap{
+      margin-top: 12px; border:1px solid #e2e8f0; border-radius: 14px; overflow:hidden; background:#fafcff;
+    }
+    .kvkk-head{
+      display:flex; align-items:center; justify-content:space-between; gap:10px;
+      padding: 12px 14px; cursor:pointer; background: linear-gradient(180deg,#f0f7ff,#ecf3ff);
+      border-bottom: 1px solid #e2e8f0;
+    }
+    .kvkk-head h3{ margin:0; font-size:1rem; }
+    .kvkk-badge{ font-size:.8rem; color:#334155; background:#e2e8f0; padding:4px 8px; border-radius:999px; }
+    .kvkk-body{
+      max-height: 0; overflow:auto; transition:max-height .35s ease;
+      background:#fff;
+    }
+    .kvkk-body.open{ max-height: 50vh; border-top: 1px dashed #e2e8f0; }
+    .kvkk-content{ padding: 14px; line-height:1.5; white-space: pre-wrap; font-size: .95rem; color:#334155; }
+    .kvkk-note{ font-size:.9rem; color:#475569; margin-top:8px; display:flex; align-items:center; gap:8px; }
+    .kvkk-controls{ display:flex; align-items:center; gap:10px; margin-top:12px; padding: 0 14px 14px; }
+
+    .checkbox{ width: 20px; height: 20px; }
+    .btn{
+      width:100%; padding:14px; border:0; border-radius: 12px; font-weight: 700; font-size:1rem; color:#fff; background: linear-gradient(135deg,var(--primary),var(--primary-700)); cursor:pointer;
+      box-shadow: 0 10px 24px rgba(53,92,214,.25);
+    }
+    .btn:disabled{ opacity:.65; cursor:not-allowed; box-shadow:none; }
+
+    .status{ margin-top: 12px; font-size: .95rem; }
+    .ok{ color: var(--ok); }
+    .err{ color: var(--err); }
+
+    .chips{ display:flex; flex-wrap:wrap; gap:8px; margin: 6px 0 10px; }
+    .chip{ font-size:.8rem; background:#e0e7ff; color:#3730a3; padding:4px 8px; border-radius:999px; }
+
+    /* nicer tap targets on iOS */
+    @media (hover:none){ select, input, button, label{ min-height: 48px; } }
+
+    /* tiny footer */
+    .footer{ text-align:center; color:#64748b; font-size:.9rem; margin-top:14px; }
+    .footer a{ color:#355CD6; text-decoration:none; }
   </style>
 </head>
 <body>
   <div class="wrap">
-    <div class="brand"><span class="dot"></span><strong>Bir Bulut Olsam Derneği</strong></div>
-    <h1>Etkinlik Check-in</h1>
-
-    <div id="status" class="status"></div>
-
-    <label for="event">Etkinlik Seç</label>
-    <select id="event">
-      <option value="">Yükleniyor…</option>
-    </select>
-    <div class="help">Listede yalnızca <em>Active</em> durumundaki etkinlikler görünür.</div>
-
-    <div class="row">
-      <div>
-        <label for="name">Ad Soyad</label>
-        <input id="name" type="text" placeholder="Ad Soyad" autocomplete="name" />
+    <div class="card">
+      <div class="brand">
+        <div class="logo" aria-hidden="true"></div>
+        <div>
+          <strong>Bir Bulut Olsam Derneği</strong>
+          <div class="sub">Etkinlik Check-in</div>
+        </div>
       </div>
-      <div>
-        <label for="phone">Telefon</label>
-        <input id="phone" type="tel" placeholder="05xx xxx xx xx" autocomplete="tel" />
+
+      <div class="chips">
+        <span class="chip">Mobil uyumlu</span>
+        <span class="chip">KVKK onay gerekli</span>
+        <span class="chip">Hızlı giriş</span>
       </div>
+
+      <label for="event">Etkinlik Seç</label>
+      <select id="event">
+        <option value="">Yükleniyor…</option>
+      </select>
+
+      <div class="grid">
+        <div>
+          <label for="name">Ad Soyad</label>
+          <input id="name" type="text" placeholder="Ad Soyad" autocomplete="name" />
+        </div>
+        <div>
+          <label for="phone">Telefon</label>
+          <input id="phone" type="tel" placeholder="05xx xxx xx xx" autocomplete="tel" inputmode="tel" />
+        </div>
+      </div>
+
+      <!-- KVKK -->
+      <div class="kvkk-wrap" id="kvkkWrap">
+        <div class="kvkk-head" id="kvkkToggle" role="button" aria-expanded="false">
+          <h3>KİŞİSEL VERİLERİN KORUNMASI KANUNU KAPSAMINDA AYDINLATMA METNİ</h3>
+          <span class="kvkk-badge">Oku → Kaydır</span>
+        </div>
+        <div class="kvkk-body" id="kvkkBody" aria-hidden="true">
+          <div class="kvkk-content" id="kvkkContent">
+KİŞİSEL VERİLERİN KORUNMASI KANUNU KAPSAMINDA AYDINLATMA METNİ
+Bir Bulut Olsam Derneği ("Dernek") olarak, veri sorumlusu sıfatıyla, düzenlediğimiz etkinliklere katılımınız sırasında sizlerden elde edilen kişisel verilerinize büyük önem veriyoruz. Kişisel verilerinizin 6698 sayılı Kişisel Verilerin Korunması Kanunu ("KVKK") uyarınca işlenmesi ve korunması süreçlerinde şeffaflığı sağlamak amacıyla bu aydınlatma metnini bilgilerinize sunuyoruz.
+
+1. Veri Sorumlusunun Kimliği
+KVKK uyarınca kişisel verileriniz, veri sorumlusu olarak aşağıda bilgileri sunulan Bir Bulut Olsam Derneği tarafından işlenecektir.
+Derneğin Adı: Bir Bulut Olsam Derneği
+Adres: Karaman Mahallesi, Tuna Caddesi, Fulya Sokak, No:1, Nilüfer/Bursa
+Telefon: 0555 156 07 33
+E-posta: birbulutolsamdernegi@gmail.com
+Web Sitesi: Bulunmamaktadır.
+
+2. Kişisel Verilerin İşlenme Amaçları
+Etkinliklerimize katılımınızla bağlantılı olarak toplanan kişisel verileriniz, aşağıda belirtilen amaçlarla sınırlı olarak işlenmektedir:
+• Etkinlik Yönetimi: Etkinlik kayıtlarının oluşturulması, katılımcı listelerinin hazırlanması, yaka kartlarının basılması ve etkinliğin sorunsuz bir şekilde yürütülmesi.
+• İletişim: Etkinlik öncesi bilgilendirme, hatırlatma, yer ve zaman değişikliği gibi konularda sizinle iletişime geçilmesi; etkinlik sonrası teşekkür ve değerlendirme anketlerinin gönderilmesi.
+• Tanıtım ve Kamuoyu Bilgilendirmesi: Etkinlik sırasında çekilen fotoğraf ve video kayıtlarının, Derneğin faaliyetlerini tanıtmak, kamuoyunu bilgilendirmek ve arşiv oluşturmak amacıyla Derneğin sosyal medya hesapları (Instagram, Facebook, Twitter, vb.), bültenler ve diğer basılı/dijital yayın organlarında paylaşılması.
+• Yasal Yükümlülükler: Dernekler mevzuatı ve diğer ilgili kanunlar uyarınca resmi kurumlara (örneğin mülki idare amirlikleri) yapılması gereken zorunlu bildirimlerin yerine getirilmesi.
+• Raporlama ve Analiz: Gelecekteki etkinlikleri iyileştirmek amacıyla katılımcı profili hakkında isimsizleştirilmiş (anonim) istatistiksel veriler oluşturulması.
+
+3. İşlenen Kişisel Veri Kategorileri ve Toplama Yöntemleri
+Kişisel verileriniz, etkinlik kayıt formları (dijital veya basılı), e-posta, telefon görüşmeleri ve etkinlik sırasında gerçekleştirilen fotoğraf/video çekimleri gibi otomatik veya otomatik olmayan yöntemlerle toplanmaktadır. Bu kapsamda işlenen başlıca kişisel verileriniz şunlardır:
+• Kimlik Bilgileri: Ad, Soyadı
+• İletişim Bilgileri: E-posta Adresi, Telefon Numarası
+• Görsel ve İşitsel Veriler: Etkinlik sırasında çekilen fotoğraf ve video kayıtları
+
+4. Kişisel Verilerin Aktarılabileceği Taraflar ve Aktarım Amaçları
+Kişisel verileriniz, KVKK’nın 8. ve 9. maddelerine uygun olarak; tedarikçiler, iş ortakları, yetkili kamu kurum/kuruluşları ve tanıtım faaliyetleri kapsamında kamuoyu ile paylaşılabilir.
+
+5. Kişisel Veri Toplamanın Hukuki Sebebi
+Kişisel verileriniz KVKK md.5 kapsamındaki hukuki sebeplere dayanılarak işlenmektedir: sözleşmenin kurulması/ifası, hukuki yükümlülük, meşru menfaat. Fotoğraf-video gibi veriler ve tanıtım amaçlı paylaşımlar için açık rıza esastır. Etkinlik alanına girmeniz ve/veya formu doldurmanız bu metin kapsamında aydınlatılmış rızanızın bulunduğu anlamına gelebilir.
+
+6. İlgili Kişi Olarak Haklarınız (KVKK md.11)
+• İşlenip işlenmediğini öğrenme, • bilgi talep etme, • amacına uygun kullanımı öğrenme, • aktarılan üçüncü kişileri bilme, • düzeltme, • silme/yok etme talebi, • bilgilendirme, • otomatik işleme itiraz, • zarar halinde tazmin talebi haklarına sahipsiniz.
+Başvurularınızı kimlik teyidi ile yazılı olarak veya kayıtlı kanallardan birbulutolsamdernegi@gmail.com adresine iletebilirsiniz. Başvurular 30 gün içinde sonuçlandırılır.
+
+Bu aydınlatma metni mevzuat ve koşullara göre güncellenebilir.
+Bir Bulut Olsam Derneği
+          </div>
+          <div class="kvkk-controls">
+            <input id="kvkk" class="checkbox" type="checkbox" disabled />
+            <label for="kvkk" style="font-weight:600;margin:0;">KVKK metnini okudum, kişisel verilerimin işlenmesine onay veriyorum.</label>
+          </div>
+          <div class="kvkk-note" id="kvkkNote">🔒 Onay kutusu, metni en alta kadar kaydırınca aktifleşir.</div>
+        </div>
+      </div>
+
+      <button class="btn" id="submitBtn" disabled>Check-in Yap</button>
+      <div id="status" class="status"></div>
     </div>
 
-    <label class="kvkk">
-      <input id="kvkk" type="checkbox" />
-      <span>Kişisel verilerimin, bu etkinliğe girişimin kaydı ve doğrulanması amacıyla işlenmesini onaylıyorum.</span>
-    </label>
-
-    <button id="submitBtn">Check-in Yap</button>
+    <div class="footer">© Bir Bulut Olsam Derneği · <a href="#" id="openKvkk">KVKK Metnini Aç</a></div>
   </div>
 
   <script>
-    // Apps Script Web App URL'in:
-    const WEBAPP_URL = "https://script.google.com/a/macros/birbulutolsam.com/s/AKfycby5vzhLsuviao06oTuCctEWDCMSypmySNN3T7fBF0-jepueKf1ujrKeUFjtCJuoADzX/exec";
+    // 1) Apps Script Web App URL ( /macros/ ile başlayan EXEC )
+    const WEBAPP_URL = "https://script.google.com/macros/s/AKfycby5vzhLsuviao06oTuCctEWDCMSypmySNN3T7fBF0-jepueKf1ujrKeUFjtCJuoADzX/exec";
 
+    // ------- Elemanlar
     const elEvent = document.getElementById('event');
-    const elName = document.getElementById('name');
+    const elName  = document.getElementById('name');
     const elPhone = document.getElementById('phone');
-    const elKvkk = document.getElementById('kvkk');
-    const elStatus = document.getElementById('status');
-    const btn = document.getElementById('submitBtn');
+    const elKvkk  = document.getElementById('kvkk');
+    const elStatus= document.getElementById('status');
+    const btn     = document.getElementById('submitBtn');
 
-    function setStatus(msg, ok=false) {
+    const kvkkToggle  = document.getElementById('kvkkToggle');
+    const kvkkBody    = document.getElementById('kvkkBody');
+    const kvkkContent = document.getElementById('kvkkContent');
+    const kvkkNote    = document.getElementById('kvkkNote');
+    const openKvkk    = document.getElementById('openKvkk');
+
+    function setStatus(msg, ok=false){
       elStatus.className = 'status ' + (ok ? 'ok' : 'err');
       elStatus.textContent = msg || '';
     }
 
-    async function loadEvents() {
-      try {
-        const res = await fetch(WEBAPP_URL + "?action=events", { method: 'GET' });
-        const data = await res.json();
-        if (!data.ok) throw new Error(data.error || 'Bilinmeyen hata');
+    function validatePhone(p){
+      const digits = (p||'').replace(/\D/g,'');
+      return digits.length >= 10; // TR cep için basit kontrol
+    }
 
+    // ---------- KVKK akışı
+    function toggleKvkk(open){
+      kvkkBody.classList.toggle('open', open);
+      kvkkBody.setAttribute('aria-hidden', open ? 'false':'true');
+      kvkkToggle.setAttribute('aria-expanded', open ? 'true':'false');
+    }
+    kvkkToggle.addEventListener('click', ()=> toggleKvkk(!kvkkBody.classList.contains('open')));
+    openKvkk.addEventListener('click', (e)=>{ e.preventDefault(); toggleKvkk(true); kvkkBody.scrollTop = 0; });
+
+    // Metni en alta kaydırmadan onay kutusu kilitli kalsın
+    kvkkBody.addEventListener('scroll', ()=>{
+      const atBottom = kvkkBody.scrollTop + kvkkBody.clientHeight >= kvkkContent.offsetHeight - 8;
+      if (atBottom){
+        elKvkk.disabled = false;
+        kvkkNote.textContent = "✅ Onay kutusunu işaretleyebilirsiniz.";
+      }
+    });
+
+    // Form alanları değişince butonun durumunu güncelle
+    function updateButton(){
+      const ok = elEvent.value && elName.value.trim() && validatePhone(elPhone.value) && elKvkk.checked;
+      btn.disabled = !ok;
+    }
+    elEvent?.addEventListener('change', updateButton);
+    elName.addEventListener('input', updateButton);
+    elPhone.addEventListener('input', updateButton);
+    elKvkk.addEventListener('change', updateButton);
+
+    // ---------- Etkinlikleri yükle (GET). CORS sorununda JSONP'ye otomatik düşer.
+    async function loadEventsFetch(){
+      const res = await fetch(WEBAPP_URL + "?action=events", { method:'GET' });
+      return res.json();
+    }
+    function loadEventsJSONP(){
+      return new Promise((resolve,reject)=>{
+        const cb = 'bboCb_' + Math.random().toString(36).slice(2);
+        window[cb] = (data)=>{ resolve(data); delete window[cb]; s.remove(); };
+        const s = document.createElement('script');
+        s.src = WEBAPP_URL + '?action=events&callback=' + cb;
+        s.onerror = ()=>{ reject(new Error('JSONP yüklenemedi')); s.remove(); delete window[cb]; };
+        document.body.appendChild(s);
+      });
+    }
+    async function loadEvents(){
+      try{
+        let data;
+        try{
+          data = await loadEventsFetch();
+        }catch(_){
+          // fetch/CORS olmazsa JSONP
+          data = await loadEventsJSONP();
+        }
+        if (!data.ok) throw new Error(data.error || 'Bilinmeyen hata');
         elEvent.innerHTML = '<option value="">Bir etkinlik seçin…</option>';
-        data.events.forEach(ev => {
+        (data.events||[]).forEach(ev=>{
           const opt = document.createElement('option');
-          opt.value = ev.eventCode;               // sadece eventCode göndereceğiz
+          opt.value = ev.eventCode;
           opt.textContent = `${ev.eventName} (${ev.eventCode})`;
           elEvent.appendChild(opt);
         });
-
-        if (data.events.length === 0) {
-          setStatus('Aktif etkinlik bulunamadı.', false);
-        } else {
-          setStatus('');
-        }
-      } catch (err) {
+        if ((data.events||[]).length===0) setStatus('Aktif etkinlik bulunamadı.', false);
+        else setStatus('');
+        updateButton();
+      }catch(err){
         setStatus('Etkinlik listesi yüklenemedi: ' + err.message, false);
       }
     }
 
-    function validatePhone(p) {
-      // temel TR cep formatı kontrolü (esnek)
-      const digits = p.replace(/\D/g,'');
-      return digits.length >= 10; // 05xxxxxxxx gibi
-    }
-
-    async function submitCheckin() {
+    // ---------- Check-in gönder (POST)
+    async function submitCheckin(){
       setStatus('');
       const eventCode = elEvent.value;
       const name = elName.value.trim();
@@ -110,33 +295,33 @@
 
       if (!eventCode) return setStatus('Lütfen bir etkinlik seçin.', false);
       if (!name) return setStatus('Lütfen ad soyad girin.', false);
-      if (!phone) return setStatus('Lütfen telefon girin.', false);
       if (!validatePhone(phone)) return setStatus('Telefon formatı hatalı görünüyor.', false);
       if (!kvkk) return setStatus('KVKK onayı gereklidir.', false);
 
       btn.disabled = true;
-      try {
+      try{
         const res = await fetch(WEBAPP_URL, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          // Sadece eventCode, name, phone gönderiyoruz
+          method:'POST',
+          headers:{ 'Content-Type':'application/json' },
           body: JSON.stringify({ eventCode, name, phone })
         });
         const data = await res.json();
         if (!data.ok) throw new Error(data.error || 'Kayıt başarısız');
 
-        setStatus('Check-in başarıyla alındı. İyi etkinlikler! ☁️', true);
-        elName.value = '';
-        elPhone.value = '';
-        elKvkk.checked = false;
-      } catch (err) {
+        setStatus('Check-in alındı. İyi etkinlikler! ☁️', true);
+        elName.value=''; elPhone.value=''; elKvkk.checked=false;
+        updateButton();
+        // Kvkk tekrar kaydırmaya zorlama
+        elKvkk.disabled = true; kvkkNote.textContent = '🔒 Onay kutusu, metni en alta kadar kaydırınca aktifleşir.';
+      }catch(err){
         setStatus('Gönderim hatası: ' + err.message, false);
-      } finally {
+      }finally{
         btn.disabled = false;
       }
     }
+    document.getElementById('submitBtn').addEventListener('click', submitCheckin);
 
-    btn.addEventListener('click', submitCheckin);
+    // Başlat
     loadEvents();
   </script>
 </body>
