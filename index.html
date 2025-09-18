@@ -7,16 +7,8 @@
   <meta name="theme-color" content="#5B8DEF" />
   <style>
     :root{
-      --bg:#F4F7FF;
-      --card:#FFFFFF;
-      --primary:#5B8DEF;
-      --primary-700:#355CD6;
-      --accent:#8EE1F7;
-      --ok:#0f766e;
-      --err:#b91c1c;
-      --text:#111827;
-      --muted:#64748b;
-      --shadow:0 10px 30px rgba(43,78,255,.12);
+      --bg:#F4F7FF; --card:#FFFFFF; --primary:#5B8DEF; --primary-700:#355CD6; --accent:#8EE1F7;
+      --ok:#0f766e; --err:#b91c1c; --text:#111827; --muted:#64748b; --shadow:0 10px 30px rgba(43,78,255,.12);
       --radius:18px;
     }
     *{box-sizing:border-box}
@@ -35,6 +27,7 @@
     select:focus,input:focus{border-color:var(--primary);box-shadow:0 0 0 3px rgba(91,141,239,.18)}
     .grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
     @media (max-width:640px){.grid{grid-template-columns:1fr}}
+
     .kvkk-wrap{margin-top:12px;border:1px solid #e2e8f0;border-radius:14px;overflow:hidden;background:#fafcff}
     .kvkk-head{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:12px 14px;cursor:pointer;background:linear-gradient(180deg,#f0f7ff,#ecf3ff);border-bottom:1px solid #e2e8f0}
     .kvkk-head h3{margin:0;font-size:1rem}
@@ -45,10 +38,13 @@
     .kvkk-note{font-size:.9rem;color:#475569;margin-top:8px;display:flex;align-items:center;gap:8px}
     .kvkk-controls{display:flex;align-items:center;gap:10px;margin-top:12px;padding:0 14px 14px}
     .checkbox{width:20px;height:20px}
+
     .btn{width:100%;padding:14px;border:0;border-radius:12px;font-weight:700;font-size:1rem;color:#fff;background:linear-gradient(135deg,var(--primary),var(--primary-700));cursor:pointer;box-shadow:0 10px 24px rgba(53,92,214,.25)}
     .btn:disabled{opacity:.65;cursor:not-allowed;box-shadow:none}
+
     .status{margin-top:12px;font-size:.95rem}
     .ok{color:var(--ok)} .err{color:var(--err)}
+
     @media (hover:none){select,input,button,label{min-height:48px}}
     .footer{text-align:center;color:#64748b;font-size:.9rem;margin-top:14px}
     .footer a{color:#355CD6;text-decoration:none}
@@ -143,8 +139,8 @@ Bir Bulut Olsam Derneği
   </div>
 
   <script>
-    // Apps Script Web App EXEC URL ( /macros/ ile başlayan )
-    const WEBAPP_URL = "https://script.google.com/macros/s/AKfycbyiozsc-BBxoTUEY7Rq4wAN4Uayn3lxQHb3nuMIlPQwLB49F0w4bVcOvD6ry32PS35I/exec";
+    // Apps Script EXEC URL ( /macros/ ile başlayan )
+    const WEBAPP_URL = "https://script.google.com/macros/s/AKfycbymxMJJvySLXFzYqTBmZrhzxHXDDlJb8Vu178TD-3JafcO_ytNSXTJwMZ7EaIdNnr1Y/exec";
 
     // Elemanlar
     const elEvent = document.getElementById('event');
@@ -234,7 +230,7 @@ Bir Bulut Olsam Derneği
       }
     }
 
-    // PRE-FLIGHT tetiklemeyen POST (URL-encoded, headersız)
+    // PRE-FLIGHT tetiklemeyen POST (URL-encoded, simple request)
     async function submitCheckin(){
       setStatus('');
       const eventCode = elEvent.value;
@@ -249,8 +245,12 @@ Bir Bulut Olsam Derneği
 
       btn.disabled = true;
       try{
-        const body = new URLSearchParams({ eventCode, name, phone }).toString();
-        const res = await fetch(WEBAPP_URL, { method:'POST', body }); // header YOK!
+        const body = new URLSearchParams({ eventCode, name, phone });
+        const res = await fetch(WEBAPP_URL, {
+          method:'POST',
+          headers:{ 'Content-Type':'application/x-www-form-urlencoded;charset=UTF-8' }, // simple request
+          body
+        });
         if (!res.ok) throw new Error('Sunucudan beklenmedik yanıt');
 
         setStatus('Check-in alındı. İyi etkinlikler! ☁️', true);
