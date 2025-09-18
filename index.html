@@ -144,7 +144,7 @@ Bir Bulut Olsam Derneği
 
   <script>
     // Apps Script Web App EXEC URL ( /macros/ ile başlayan )
-    const WEBAPP_URL = "https://script.google.com/macros/s/AKfycbyMsAnpLeSfMq9-tmxXFx1HaBgMBFEt3xb12C-ii17oS0ZBWCbMBogkzWlHiYyLRVKK/exec";
+    const WEBAPP_URL = "https://script.google.com/macros/s/AKfycbyiozsc-BBxoTUEY7Rq4wAN4Uayn3lxQHb3nuMIlPQwLB49F0w4bVcOvD6ry32PS35I/exec";
 
     // Elemanlar
     const elEvent = document.getElementById('event');
@@ -234,7 +234,7 @@ Bir Bulut Olsam Derneği
       }
     }
 
-    // Check-in POST
+    // PRE-FLIGHT tetiklemeyen POST (URL-encoded, headersız)
     async function submitCheckin(){
       setStatus('');
       const eventCode = elEvent.value;
@@ -249,13 +249,9 @@ Bir Bulut Olsam Derneği
 
       btn.disabled = true;
       try{
-        const res = await fetch(WEBAPP_URL, {
-          method:'POST',
-          headers:{ 'Content-Type':'application/json' },
-          body: JSON.stringify({ eventCode, name, phone })
-        });
-        const data = await res.json();
-        if (!data.ok) throw new Error(data.error || 'Kayıt başarısız');
+        const body = new URLSearchParams({ eventCode, name, phone }).toString();
+        const res = await fetch(WEBAPP_URL, { method:'POST', body }); // header YOK!
+        if (!res.ok) throw new Error('Sunucudan beklenmedik yanıt');
 
         setStatus('Check-in alındı. İyi etkinlikler! ☁️', true);
         elName.value=''; elPhone.value=''; elKvkk.checked=false; elKvkk.disabled=true;
