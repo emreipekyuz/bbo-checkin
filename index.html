@@ -1,0 +1,73 @@
+/*** CONFIG ***/
+const SHEET_EVENTS   = 'Events';
+const SHEET_CHECKINS = 'Checkins';
+
+// Senin Web App exec URL’in:
+const WEBAPP_URL = "https://script.google.com/a/macros/birbulutolsam.com/s/AKfycbzVZCylrUfU3mw6FrR07-d5r1vfE3BvLaGm7i34Y7fevSCZOJMkBy-MZ9W5hV51LYpl/exec";
+
+/*** HTTP: GET ***/
+function doGet(e) {
+  const action = (e && e.parameter && e.parameter.action) || '';
+  if (action === 'events') {
+    const events = getActiveEvents_();
+    return respond_({ ok: true, events });
+  }
+  return respond_({ ok: false, error: 'Unknown action' });
+}
+
+/*** HTTP: POST (check-in yaz) ***/
+function doPost(e) {
+  try {
+    if (!e.postData || !e.postData.contents) {
+      return respond_({ ok: false, error: 'Empty body' });
+    }
+    const data = JSON.parse(e.postData.contents);
+
+    const eventCode = (data.eventCode || '').trim();
+    const eventName = (data.eventName || '').trim();
+    const name      = (data.name || '').trim();
+    const phone     = (data.phone || '').trim();
+
+    if (!eventCode || !eventName || !name || !phone) {
+      return respond_({ ok: false, error: 'Missing fields' });
+    }
+
+    const sh = SpreadsheetApp.getActive().getSheetByName(SHEET_CHECKINS);
+    sh.appendRow([
+      new Date(),     // Timestamp
+      eventCode,      // EventCode
+      eventName,      // EventName
+      name,           // Name
+      phone           // Phone
+    ]);
+
+    return respond_({ ok: true });
+  } catch (err) {
+    return respond_({ ok: false, error: String(err) });
+  }
+}
+
+/*** HELPERS ***/
+function getActiveEvents_() {
+  const sh = SpreadsheetApp.getActive().getSheetByName(SHEET_EVENTS);
+  const vals = sh.getDataRange().getValues();
+  const hdr = vals[0];
+  const idx = (n) => hdr.indexOf(n);
+
+  const out = [];
+  for (let i = 1; i < vals.length; i++) {
+    const status = String(vals[i][idx('Status')] || '').toUpperCase();
+    if (status !== 'ACTIVE') continue;
+    out.push({
+      eventCode: vals[i][idx('EventCode')],
+      eventName: vals[i][idx('EventName')],
+    });
+  }
+  return out;
+}
+
+function respond_(obj) {
+  return ContentService
+    .createTextOutput(JSON.stringify(obj))
+    .setMimeType(ContentService.MimeType.JSON);
+}
