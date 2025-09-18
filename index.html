@@ -1,73 +1,143 @@
-/*** CONFIG ***/
-const SHEET_EVENTS   = 'Events';
-const SHEET_CHECKINS = 'Checkins';
+<!doctype html>
+<html lang="tr">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>BBO — Check-in</title>
+  <style>
+    body { font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif; margin: 0; background: #f6f7fb; }
+    .wrap { max-width: 560px; margin: 40px auto; background: #fff; border-radius: 16px; padding: 24px; box-shadow: 0 6px 24px rgba(0,0,0,0.07); }
+    h1 { font-size: 1.25rem; margin: 0 0 12px; }
+    label { display:block; font-size: 0.95rem; margin: 14px 0 6px; }
+    input, select, button { width: 100%; padding: 12px; border: 1px solid #d8dbe3; border-radius: 10px; font-size: 1rem; }
+    button { cursor: pointer; border: 0; background: #4f46e5; color: #fff; font-weight: 600; margin-top: 14px; }
+    button:disabled { opacity: .6; cursor: not-allowed; }
+    .row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+    .help { font-size: .9rem; color:#5b6171; margin-top: 6px; }
+    .status { margin-top: 14px; font-size: .95rem; }
+    .ok { color:#0f766e; }
+    .err { color:#b91c1c; }
+    .kvkk { display:flex; gap:10px; align-items:flex-start; margin-top: 10px; }
+    .kvkk input { width: auto; }
+    .brand { display:flex; align-items:center; gap:10px; margin-bottom: 12px; color:#334155; }
+    .brand .dot { width:10px;height:10px;border-radius:50%;background:#60a5fa; }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <div class="brand"><span class="dot"></span><strong>Bir Bulut Olsam Derneği</strong></div>
+    <h1>Etkinlik Check-in</h1>
 
-// Senin Web App exec URL’in:
-const WEBAPP_URL = "https://script.google.com/a/macros/birbulutolsam.com/s/AKfycbzVZCylrUfU3mw6FrR07-d5r1vfE3BvLaGm7i34Y7fevSCZOJMkBy-MZ9W5hV51LYpl/exec";
+    <div id="status" class="status"></div>
 
-/*** HTTP: GET ***/
-function doGet(e) {
-  const action = (e && e.parameter && e.parameter.action) || '';
-  if (action === 'events') {
-    const events = getActiveEvents_();
-    return respond_({ ok: true, events });
-  }
-  return respond_({ ok: false, error: 'Unknown action' });
-}
+    <label for="event">Etkinlik Seç</label>
+    <select id="event">
+      <option value="">Yükleniyor…</option>
+    </select>
+    <div class="help">Listede yalnızca <em>Active</em> durumundaki etkinlikler görünür.</div>
 
-/*** HTTP: POST (check-in yaz) ***/
-function doPost(e) {
-  try {
-    if (!e.postData || !e.postData.contents) {
-      return respond_({ ok: false, error: 'Empty body' });
+    <div class="row">
+      <div>
+        <label for="name">Ad Soyad</label>
+        <input id="name" type="text" placeholder="Ad Soyad" autocomplete="name" />
+      </div>
+      <div>
+        <label for="phone">Telefon</label>
+        <input id="phone" type="tel" placeholder="05xx xxx xx xx" autocomplete="tel" />
+      </div>
+    </div>
+
+    <label class="kvkk">
+      <input id="kvkk" type="checkbox" />
+      <span>Kişisel verilerimin, bu etkinliğe girişimin kaydı ve doğrulanması amacıyla işlenmesini onaylıyorum.</span>
+    </label>
+
+    <button id="submitBtn">Check-in Yap</button>
+  </div>
+
+  <script>
+    // Apps Script Web App URL'in:
+    const WEBAPP_URL = "https://script.google.com/a/macros/birbulutolsam.com/s/AKfycby5vzhLsuviao06oTuCctEWDCMSypmySNN3T7fBF0-jepueKf1ujrKeUFjtCJuoADzX/exec";
+
+    const elEvent = document.getElementById('event');
+    const elName = document.getElementById('name');
+    const elPhone = document.getElementById('phone');
+    const elKvkk = document.getElementById('kvkk');
+    const elStatus = document.getElementById('status');
+    const btn = document.getElementById('submitBtn');
+
+    function setStatus(msg, ok=false) {
+      elStatus.className = 'status ' + (ok ? 'ok' : 'err');
+      elStatus.textContent = msg || '';
     }
-    const data = JSON.parse(e.postData.contents);
 
-    const eventCode = (data.eventCode || '').trim();
-    const eventName = (data.eventName || '').trim();
-    const name      = (data.name || '').trim();
-    const phone     = (data.phone || '').trim();
+    async function loadEvents() {
+      try {
+        const res = await fetch(WEBAPP_URL + "?action=events", { method: 'GET' });
+        const data = await res.json();
+        if (!data.ok) throw new Error(data.error || 'Bilinmeyen hata');
 
-    if (!eventCode || !eventName || !name || !phone) {
-      return respond_({ ok: false, error: 'Missing fields' });
+        elEvent.innerHTML = '<option value="">Bir etkinlik seçin…</option>';
+        data.events.forEach(ev => {
+          const opt = document.createElement('option');
+          opt.value = ev.eventCode;               // sadece eventCode göndereceğiz
+          opt.textContent = `${ev.eventName} (${ev.eventCode})`;
+          elEvent.appendChild(opt);
+        });
+
+        if (data.events.length === 0) {
+          setStatus('Aktif etkinlik bulunamadı.', false);
+        } else {
+          setStatus('');
+        }
+      } catch (err) {
+        setStatus('Etkinlik listesi yüklenemedi: ' + err.message, false);
+      }
     }
 
-    const sh = SpreadsheetApp.getActive().getSheetByName(SHEET_CHECKINS);
-    sh.appendRow([
-      new Date(),     // Timestamp
-      eventCode,      // EventCode
-      eventName,      // EventName
-      name,           // Name
-      phone           // Phone
-    ]);
+    function validatePhone(p) {
+      // temel TR cep formatı kontrolü (esnek)
+      const digits = p.replace(/\D/g,'');
+      return digits.length >= 10; // 05xxxxxxxx gibi
+    }
 
-    return respond_({ ok: true });
-  } catch (err) {
-    return respond_({ ok: false, error: String(err) });
-  }
-}
+    async function submitCheckin() {
+      setStatus('');
+      const eventCode = elEvent.value;
+      const name = elName.value.trim();
+      const phone = elPhone.value.trim();
+      const kvkk = elKvkk.checked;
 
-/*** HELPERS ***/
-function getActiveEvents_() {
-  const sh = SpreadsheetApp.getActive().getSheetByName(SHEET_EVENTS);
-  const vals = sh.getDataRange().getValues();
-  const hdr = vals[0];
-  const idx = (n) => hdr.indexOf(n);
+      if (!eventCode) return setStatus('Lütfen bir etkinlik seçin.', false);
+      if (!name) return setStatus('Lütfen ad soyad girin.', false);
+      if (!phone) return setStatus('Lütfen telefon girin.', false);
+      if (!validatePhone(phone)) return setStatus('Telefon formatı hatalı görünüyor.', false);
+      if (!kvkk) return setStatus('KVKK onayı gereklidir.', false);
 
-  const out = [];
-  for (let i = 1; i < vals.length; i++) {
-    const status = String(vals[i][idx('Status')] || '').toUpperCase();
-    if (status !== 'ACTIVE') continue;
-    out.push({
-      eventCode: vals[i][idx('EventCode')],
-      eventName: vals[i][idx('EventName')],
-    });
-  }
-  return out;
-}
+      btn.disabled = true;
+      try {
+        const res = await fetch(WEBAPP_URL, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          // Sadece eventCode, name, phone gönderiyoruz
+          body: JSON.stringify({ eventCode, name, phone })
+        });
+        const data = await res.json();
+        if (!data.ok) throw new Error(data.error || 'Kayıt başarısız');
 
-function respond_(obj) {
-  return ContentService
-    .createTextOutput(JSON.stringify(obj))
-    .setMimeType(ContentService.MimeType.JSON);
-}
+        setStatus('Check-in başarıyla alındı. İyi etkinlikler! ☁️', true);
+        elName.value = '';
+        elPhone.value = '';
+        elKvkk.checked = false;
+      } catch (err) {
+        setStatus('Gönderim hatası: ' + err.message, false);
+      } finally {
+        btn.disabled = false;
+      }
+    }
+
+    btn.addEventListener('click', submitCheckin);
+    loadEvents();
+  </script>
+</body>
+</html>
