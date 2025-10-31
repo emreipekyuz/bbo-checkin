@@ -5,145 +5,804 @@
   <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
   <title>Bir Bulut Olsam — Etkinlik Check-in</title>
   <meta name="theme-color" content="#5B8DEF" />
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  
   <style>
     :root{
-      --bg:#F4F7FF; --card:#FFFFFF; --primary:#5B8DEF; --primary-700:#355CD6; --accent:#8EE1F7;
-      --ok:#0f766e; --err:#b91c1c; --text:#111827; --muted:#64748b; --shadow:0 10px 30px rgba(43,78,255,.12);
+      --bg:#F4F7FF; 
+      --card:#FFFFFF; 
+      --primary:#5B8DEF; 
+      --primary-700:#355CD6; 
+      --primary-light:#dbeafe;
+      --accent:#8EE1F7;
+      --ok:#0f766e; 
+      --err:#b91c1c; 
+      --text:#111827; 
+      --muted:#64748b; 
+      --shadow:0 10px 30px rgba(43,78,255,.12);
       --radius:18px;
+      --transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
     }
-    *{box-sizing:border-box}
-    html,body{margin:0;background:radial-gradient(1200px 600px at 80% -10%, #dbeafe 0%, transparent 60%),var(--bg);color:var(--text);font-family:ui-sans-serif,system-ui,-apple-system,"Segoe UI",Roboto,Arial}
-    .wrap{max-width:720px;margin:min(6vh,48px) auto;padding:16px}
-    .card{background:var(--card);border-radius:var(--radius);box-shadow:var(--shadow);padding:clamp(18px,2.8vw,28px);overflow:hidden;border:1px solid #e5e7eb}
-    .brand{display:flex;align-items:center;gap:12px;margin-bottom:8px}
-    .logo{width:44px;height:44px;border-radius:12px;background:linear-gradient(135deg,var(--primary),var(--accent));box-shadow:0 6px 18px rgba(91,141,239,.35);position:relative}
-    .logo:before,.logo:after{content:"";position:absolute;background:#fff;border-radius:999px;opacity:.9}
-    .logo:before{width:18px;height:18px;left:8px;top:14px}
-    .logo:after{width:26px;height:26px;left:18px;top:8px}
-    h1{font-size:clamp(1.2rem,1.1rem + 1.2vw,1.8rem);margin:6px 0 2px}
-    .sub{color:var(--muted);font-size:.95rem;margin:0 0 14px}
-    label{display:block;font-weight:600;margin:14px 0 8px}
-    select,input[type="text"],input[type="tel"],input[type="email"]{width:100%;padding:14px 12px;border:1px solid #d7dce7;border-radius:12px;font-size:1rem;outline:none;background:#fff}
-    select:focus,input:focus{border-color:var(--primary);box-shadow:0 0 0 3px rgba(91,141,239,.18)}
-    .grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
-    @media (max-width:640px){.grid{grid-template-columns:1fr}}
-
-    .kvkk-wrap{margin-top:12px;border:1px solid #e2e8f0;border-radius:14px;overflow:hidden;background:#fafcff}
-    .kvkk-head{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:12px 14px;background:linear-gradient(180deg,#f0f7ff,#ecf3ff);border-bottom:1px solid #e2e8f0}
-    .kvkk-head h3{margin:0;font-size:1rem}
-    .kvkk-badge{font-size:.8rem;color:#334155;background:#e2e8f0;padding:4px 8px;border-radius:999px}
-    .kvkk-body{background:#fff}
-    .kvkk-content{padding:14px;line-height:1.5;white-space:pre-wrap;font-size:.95rem;color:#334155}
-    .kvkk-controls{display:flex;align-items:center;gap:10px;margin-top:12px;padding:0 14px 14px}
-    .checkbox{width:20px;height:20px}
-
-    .btn{width:100%;padding:14px;border:0;border-radius:12px;font-weight:700;font-size:1rem;color:#fff;background:linear-gradient(135deg,var(--primary),var(--primary-700));cursor:pointer;box-shadow:0 10px 24px rgba(53,92,214,.25)}
-    .btn:disabled{opacity:.65;cursor:not-allowed;box-shadow:none}
-
-    .status{margin-top:12px;font-size:.95rem}
-    .ok{color:var(--ok)} .err{color:var(--err)}
-
-    @media (hover:none){select,input,button,label{min-height:48px}}
-    .footer{text-align:center;color:#64748b;font-size:.9rem;margin-top:14px}
-    .footer a{color:#355CD6;text-decoration:none}
-
-    /* === TAM EKRAN POP-UP OVERLAY === */
-    .overlay{position:fixed;inset:0;background:rgba(9,12,22,.55);backdrop-filter:saturate(120%) blur(6px);display:none;align-items:center;justify-content:center;z-index:9999}
+    
+    [data-theme="dark"] {
+      --bg:#0f172a;
+      --card:#1e293b;
+      --text:#f1f5f9;
+      --muted:#94a3b8;
+      --primary-light:#1e3a8a;
+    }
+    
+    *{box-sizing:border-box;margin:0;padding:0}
+    
+    html,body{
+      margin:0;
+      background:radial-gradient(1200px 600px at 80% -10%, var(--primary-light) 0%, transparent 60%),var(--bg);
+      color:var(--text);
+      font-family:'Inter',ui-sans-serif,system-ui,-apple-system,"Segoe UI",Roboto,Arial;
+      transition: var(--transition);
+    }
+    
+    body{min-height:100vh;position:relative}
+    
+    /* NAVBAR */
+    .navbar{
+      background:var(--card);
+      border-bottom:1px solid rgba(0,0,0,.08);
+      padding:16px 0;
+      position:sticky;
+      top:0;
+      z-index:100;
+      backdrop-filter:blur(10px);
+      box-shadow:var(--shadow);
+    }
+    
+    .navbar-content{
+      max-width:1200px;
+      margin:0 auto;
+      padding:0 20px;
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+    }
+    
+    .navbar-brand{
+      display:flex;
+      align-items:center;
+      gap:12px;
+    }
+    
+    .navbar-logo{
+      width:44px;
+      height:44px;
+      border-radius:12px;
+      background:linear-gradient(135deg,var(--primary),var(--accent));
+      box-shadow:0 6px 18px rgba(91,141,239,.35);
+      position:relative;
+      animation:float 3s ease-in-out infinite;
+    }
+    
+    @keyframes float{
+      0%, 100%{transform:translateY(0)}
+      50%{transform:translateY(-5px)}
+    }
+    
+    .navbar-logo:before,.navbar-logo:after{
+      content:"";
+      position:absolute;
+      background:#fff;
+      border-radius:999px;
+      opacity:.9;
+    }
+    
+    .navbar-logo:before{width:18px;height:18px;left:8px;top:14px}
+    .navbar-logo:after{width:26px;height:26px;left:18px;top:8px}
+    
+    .navbar-text h1{
+      font-size:1.2rem;
+      font-weight:700;
+      margin:0;
+    }
+    
+    .navbar-text .sub{
+      font-size:0.85rem;
+      color:var(--muted);
+    }
+    
+    .navbar-actions{
+      display:flex;
+      gap:12px;
+      align-items:center;
+    }
+    
+    /* Theme Toggle */
+    .theme-toggle{
+      background:var(--card);
+      border:1px solid rgba(0,0,0,.1);
+      width:44px;
+      height:44px;
+      border-radius:12px;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      cursor:pointer;
+      transition:var(--transition);
+      font-size:1.3rem;
+    }
+    
+    .theme-toggle:hover{
+      transform:scale(1.05);
+      box-shadow:var(--shadow);
+    }
+    
+    /* Stats Bar */
+    .stats-bar{
+      background:var(--card);
+      border-radius:var(--radius);
+      padding:20px;
+      display:grid;
+      grid-template-columns:repeat(auto-fit,minmax(150px,1fr));
+      gap:16px;
+      margin-bottom:24px;
+      box-shadow:var(--shadow);
+      border:1px solid rgba(0,0,0,.05);
+    }
+    
+    .stat-item{
+      text-align:center;
+      padding:12px;
+      border-radius:12px;
+      background:linear-gradient(135deg,rgba(91,141,239,.05),rgba(142,225,247,.05));
+      transition:var(--transition);
+    }
+    
+    .stat-item:hover{
+      transform:translateY(-2px);
+      box-shadow:0 4px 12px rgba(0,0,0,.08);
+    }
+    
+    .stat-value{
+      font-size:2rem;
+      font-weight:800;
+      background:linear-gradient(135deg,var(--primary),var(--accent));
+      -webkit-background-clip:text;
+      background-clip:text;
+      color:transparent;
+      line-height:1;
+      margin-bottom:4px;
+    }
+    
+    .stat-label{
+      font-size:0.85rem;
+      color:var(--muted);
+      font-weight:600;
+    }
+    
+    /* Main Content */
+    .wrap{
+      max-width:1200px;
+      margin:min(6vh,48px) auto;
+      padding:16px;
+    }
+    
+    .grid-layout{
+      display:grid;
+      grid-template-columns:1fr 400px;
+      gap:24px;
+    }
+    
+    @media (max-width:1024px){
+      .grid-layout{grid-template-columns:1fr}
+    }
+    
+    .card{
+      background:var(--card);
+      border-radius:var(--radius);
+      box-shadow:var(--shadow);
+      padding:clamp(18px,2.8vw,28px);
+      overflow:hidden;
+      border:1px solid rgba(0,0,0,.05);
+      transition:var(--transition);
+    }
+    
+    .card:hover{
+      box-shadow:0 20px 40px rgba(43,78,255,.18);
+    }
+    
+    .card-title{
+      font-size:1.4rem;
+      font-weight:700;
+      margin-bottom:20px;
+      display:flex;
+      align-items:center;
+      gap:8px;
+    }
+    
+    .card-title .icon{
+      font-size:1.6rem;
+    }
+    
+    /* Form Elements */
+    label{
+      display:block;
+      font-weight:600;
+      margin:14px 0 8px;
+      font-size:0.95rem;
+    }
+    
+    select,input[type="text"],input[type="tel"],input[type="email"]{
+      width:100%;
+      padding:14px 12px;
+      border:2px solid #e5e7eb;
+      border-radius:12px;
+      font-size:1rem;
+      outline:none;
+      background:var(--card);
+      color:var(--text);
+      transition:var(--transition);
+    }
+    
+    select:focus,input:focus{
+      border-color:var(--primary);
+      box-shadow:0 0 0 4px rgba(91,141,239,.12);
+      transform:translateY(-1px);
+    }
+    
+    .grid{
+      display:grid;
+      grid-template-columns:1fr 1fr;
+      gap:12px;
+    }
+    
+    @media (max-width:640px){
+      .grid{grid-template-columns:1fr}
+    }
+    
+    /* QR Scanner */
+    .qr-scanner{
+      margin:16px 0;
+      border:2px dashed var(--primary);
+      border-radius:var(--radius);
+      padding:20px;
+      text-align:center;
+      background:linear-gradient(135deg,rgba(91,141,239,.03),rgba(142,225,247,.03));
+    }
+    
+    #qr-video{
+      width:100%;
+      max-width:400px;
+      border-radius:12px;
+      display:none;
+      margin:12px auto;
+    }
+    
+    .qr-btn{
+      background:var(--primary);
+      color:white;
+      border:0;
+      padding:12px 24px;
+      border-radius:10px;
+      font-weight:600;
+      cursor:pointer;
+      transition:var(--transition);
+      display:inline-flex;
+      align-items:center;
+      gap:8px;
+    }
+    
+    .qr-btn:hover{
+      background:var(--primary-700);
+      transform:translateY(-2px);
+      box-shadow:0 6px 16px rgba(91,141,239,.4);
+    }
+    
+    .qr-btn:disabled{
+      opacity:0.5;
+      cursor:not-allowed;
+    }
+    
+    /* KVKK */
+    .kvkk-wrap{
+      margin-top:12px;
+      border:1px solid #e2e8f0;
+      border-radius:14px;
+      overflow:hidden;
+      background:#fafcff;
+      transition:var(--transition);
+    }
+    
+    [data-theme="dark"] .kvkk-wrap{
+      background:rgba(255,255,255,.03);
+      border-color:rgba(255,255,255,.1);
+    }
+    
+    .kvkk-head{
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:10px;
+      padding:12px 14px;
+      background:linear-gradient(180deg,#f0f7ff,#ecf3ff);
+      border-bottom:1px solid #e2e8f0;
+    }
+    
+    [data-theme="dark"] .kvkk-head{
+      background:rgba(91,141,239,.1);
+    }
+    
+    .kvkk-head h3{
+      margin:0;
+      font-size:1rem;
+    }
+    
+    .kvkk-badge{
+      font-size:.8rem;
+      color:#334155;
+      background:#e2e8f0;
+      padding:4px 8px;
+      border-radius:999px;
+    }
+    
+    .kvkk-body{background:var(--card)}
+    
+    .kvkk-content{
+      padding:14px;
+      line-height:1.6;
+      white-space:pre-wrap;
+      font-size:.95rem;
+      color:var(--muted);
+    }
+    
+    .kvkk-controls{
+      display:flex;
+      align-items:center;
+      gap:10px;
+      margin-top:12px;
+      padding:0 14px 14px;
+    }
+    
+    .checkbox{
+      width:20px;
+      height:20px;
+      cursor:pointer;
+    }
+    
+    /* Button */
+    .btn{
+      width:100%;
+      padding:16px;
+      border:0;
+      border-radius:12px;
+      font-weight:700;
+      font-size:1.05rem;
+      color:#fff;
+      background:linear-gradient(135deg,var(--primary),var(--primary-700));
+      cursor:pointer;
+      box-shadow:0 10px 24px rgba(53,92,214,.25);
+      transition:var(--transition);
+      position:relative;
+      overflow:hidden;
+    }
+    
+    .btn:before{
+      content:"";
+      position:absolute;
+      top:0;
+      left:-100%;
+      width:100%;
+      height:100%;
+      background:linear-gradient(90deg,transparent,rgba(255,255,255,.3),transparent);
+      transition:left 0.5s;
+    }
+    
+    .btn:hover:not(:disabled):before{
+      left:100%;
+    }
+    
+    .btn:hover:not(:disabled){
+      transform:translateY(-2px);
+      box-shadow:0 16px 32px rgba(53,92,214,.35);
+    }
+    
+    .btn:disabled{
+      opacity:.65;
+      cursor:not-allowed;
+      box-shadow:none;
+    }
+    
+    .btn:active:not(:disabled){
+      transform:scale(0.98);
+    }
+    
+    /* Status Messages */
+    .status{
+      margin-top:12px;
+      font-size:.95rem;
+      padding:12px;
+      border-radius:10px;
+      animation:slideIn 0.3s ease-out;
+    }
+    
+    @keyframes slideIn{
+      from{opacity:0;transform:translateY(-10px)}
+      to{opacity:1;transform:translateY(0)}
+    }
+    
+    .ok{
+      color:var(--ok);
+      background:rgba(15,118,110,.1);
+      border:1px solid rgba(15,118,110,.2);
+    }
+    
+    .err{
+      color:var(--err);
+      background:rgba(185,28,28,.1);
+      border:1px solid rgba(185,28,28,.2);
+    }
+    
+    /* Recent Check-ins Sidebar */
+    .recent-checkins{
+      max-height:600px;
+      overflow-y:auto;
+    }
+    
+    .checkin-item{
+      padding:14px;
+      border-bottom:1px solid rgba(0,0,0,.05);
+      display:flex;
+      gap:12px;
+      align-items:center;
+      transition:var(--transition);
+      animation:fadeIn 0.4s ease-out;
+    }
+    
+    @keyframes fadeIn{
+      from{opacity:0;transform:translateX(-20px)}
+      to{opacity:1;transform:translateX(0)}
+    }
+    
+    .checkin-item:hover{
+      background:rgba(91,141,239,.05);
+    }
+    
+    .avatar{
+      width:44px;
+      height:44px;
+      border-radius:50%;
+      background:linear-gradient(135deg,var(--primary),var(--accent));
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      font-weight:700;
+      color:white;
+      font-size:1.1rem;
+      flex-shrink:0;
+    }
+    
+    .checkin-details{
+      flex:1;
+      min-width:0;
+    }
+    
+    .checkin-name{
+      font-weight:600;
+      margin-bottom:2px;
+      white-space:nowrap;
+      overflow:hidden;
+      text-overflow:ellipsis;
+    }
+    
+    .checkin-time{
+      font-size:0.8rem;
+      color:var(--muted);
+    }
+    
+    /* Footer */
+    .footer{
+      text-align:center;
+      color:var(--muted);
+      font-size:.9rem;
+      margin-top:40px;
+      padding:20px;
+    }
+    
+    .footer a{
+      color:var(--primary);
+      text-decoration:none;
+      transition:var(--transition);
+    }
+    
+    .footer a:hover{
+      text-decoration:underline;
+    }
+    
+    /* Overlay Modal */
+    .overlay{
+      position:fixed;
+      inset:0;
+      background:rgba(9,12,22,.7);
+      backdrop-filter:saturate(120%) blur(8px);
+      display:none;
+      align-items:center;
+      justify-content:center;
+      z-index:9999;
+      animation:overlayFadeIn 0.3s ease-out;
+    }
+    
+    @keyframes overlayFadeIn{
+      from{opacity:0}
+      to{opacity:1}
+    }
+    
     .overlay.open{display:flex}
+    
     .modal{
-      max-width:min(760px,92vw);width:100%;background:#fff;border-radius:22px;padding:28px;
-      box-shadow:0 18px 60px rgba(0,0,0,.22);text-align:center;position:relative;overflow:hidden;
-      border:1px solid #e5e7eb;
+      max-width:min(560px,92vw);
+      width:100%;
+      background:var(--card);
+      border-radius:22px;
+      padding:32px;
+      box-shadow:0 24px 80px rgba(0,0,0,.3);
+      text-align:center;
+      position:relative;
+      overflow:hidden;
+      border:1px solid rgba(255,255,255,.1);
+      animation:modalSlideIn 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
     }
-    .modal h2{font-size:clamp(1.4rem,1.1rem + 1.6vw,2rem);margin:0 0 6px}
+    
+    @keyframes modalSlideIn{
+      from{opacity:0;transform:scale(0.8) translateY(40px)}
+      to{opacity:1;transform:scale(1) translateY(0)}
+    }
+    
+    .modal h2{
+      font-size:clamp(1.4rem,1.1rem + 1.6vw,1.8rem);
+      margin:0 0 8px;
+    }
+    
     .modal .lead{
-      font-weight:800;letter-spacing:.2px;font-size:clamp(1.2rem,1rem + 1vw,1.5rem);
+      font-weight:800;
+      letter-spacing:.5px;
+      font-size:clamp(1.3rem,1rem + 1vw,1.6rem);
       background:linear-gradient(135deg,#4da3ff,#7bdaff,#7bf5c5);
-      -webkit-background-clip:text;background-clip:text;color:transparent;margin-bottom:8px
+      -webkit-background-clip:text;
+      background-clip:text;
+      color:transparent;
+      margin-bottom:12px;
+      animation:textGlow 2s ease-in-out infinite;
     }
-    .modal p{margin:0 0 8px;color:#374151}
-    .modal .sub{font-size:.9rem;color:#6b7280}
+    
+    @keyframes textGlow{
+      0%, 100%{filter:brightness(1)}
+      50%{filter:brightness(1.2)}
+    }
+    
+    .modal p{
+      margin:0 0 8px;
+      color:var(--text);
+      line-height:1.6;
+    }
+    
+    .modal .sub{
+      font-size:.9rem;
+      color:var(--muted);
+    }
+    
     .modal .btn-close{
-      margin-top:14px;display:inline-block;padding:12px 16px;border-radius:12px;border:0;background:#111;color:#fff;font-weight:700;cursor:pointer
+      margin-top:20px;
+      display:inline-block;
+      padding:14px 28px;
+      border-radius:12px;
+      border:0;
+      background:linear-gradient(135deg,#111,#333);
+      color:#fff;
+      font-weight:700;
+      cursor:pointer;
+      transition:var(--transition);
     }
-    .confetti{position:absolute;inset:0;pointer-events:none}
+    
+    .modal .btn-close:hover{
+      transform:translateY(-2px);
+      box-shadow:0 8px 20px rgba(0,0,0,.3);
+    }
+    
+    .confetti{
+      position:absolute;
+      inset:0;
+      pointer-events:none;
+    }
+    
+    /* Loading Spinner */
+    .spinner{
+      display:inline-block;
+      width:20px;
+      height:20px;
+      border:3px solid rgba(255,255,255,.3);
+      border-top-color:white;
+      border-radius:50%;
+      animation:spin 0.8s linear infinite;
+    }
+    
+    @keyframes spin{
+      to{transform:rotate(360deg)}
+    }
+    
+    /* Empty State */
+    .empty-state{
+      text-align:center;
+      padding:40px 20px;
+      color:var(--muted);
+    }
+    
+    .empty-state .icon{
+      font-size:3rem;
+      margin-bottom:12px;
+      opacity:0.5;
+    }
+    
+    /* Responsive */
+    @media (hover:none){
+      select,input,button,label{min-height:48px}
+    }
+    
+    @media (max-width:640px){
+      .stats-bar{
+        grid-template-columns:1fr 1fr;
+      }
+      
+      .stat-value{
+        font-size:1.5rem;
+      }
+    }
   </style>
 </head>
 <body>
+  <!-- Navigation -->
+  <nav class="navbar">
+    <div class="navbar-content">
+      <div class="navbar-brand">
+        <div class="navbar-logo" aria-hidden="true"></div>
+        <div class="navbar-text">
+          <h1>Bir Bulut Olsam Derneği</h1>
+          <div class="sub">Etkinlik Check-in Sistemi</div>
+        </div>
+      </div>
+      <div class="navbar-actions">
+        <button class="theme-toggle" id="themeToggle" aria-label="Tema Değiştir">
+          <span id="themeIcon">🌙</span>
+        </button>
+      </div>
+    </div>
+  </nav>
+
   <div class="wrap">
-    <div class="card">
-      <div class="brand">
-        <div class="logo" aria-hidden="true"></div>
-        <div>
-          <strong>Bir Bulut Olsam Derneği</strong>
-          <div class="sub">Etkinlik Check-in</div>
-        </div>
+    <!-- Stats Bar -->
+    <div class="stats-bar">
+      <div class="stat-item">
+        <div class="stat-value" id="todayCount">0</div>
+        <div class="stat-label">Bugün</div>
       </div>
-
-      <label for="event">Etkinlik Seç</label>
-      <select id="event">
-        <option value="">Yükleniyor…</option>
-      </select>
-
-      <div class="grid">
-        <div>
-          <label for="name">Ad Soyad</label>
-          <input id="name" type="text" placeholder="Ad Soyad" autocomplete="name" />
-        </div>
-        <div>
-          <label for="phone">Telefon</label>
-          <input id="phone" type="tel" placeholder="05xx xxx xx xx" autocomplete="tel" inputmode="tel" />
-        </div>
+      <div class="stat-item">
+        <div class="stat-value" id="eventCount">0</div>
+        <div class="stat-label">Bu Etkinlik</div>
       </div>
-
-      <!-- E-Posta (zorunlu) -->
-      <div>
-        <label for="email">E-posta</label>
-        <input id="email" type="email" placeholder="ornek@eposta.com" autocomplete="email" />
+      <div class="stat-item">
+        <div class="stat-value" id="totalCount">0</div>
+        <div class="stat-label">Toplam</div>
       </div>
-
-      <!-- KVKK (kaydırma şartı yok) -->
-      <div class="kvkk-wrap" id="kvkkWrap">
-        <div class="kvkk-head">
-          <h3>KİŞİSEL VERİLERİN KORUNMASI KANUNU KAPSAMINDA AYDINLATMA METNİ</h3>
-          <span class="kvkk-badge">Bilgilendirme</span>
-        </div>
-        <div class="kvkk-body" id="kvkkBody" aria-hidden="false">
-          <div class="kvkk-content" id="kvkkContent">
-KİŞİSEL VERİLERİN KORUNMASI KANUNU KAPSAMINDA AYDINLATMA METNİ
-Bir Bulut Olsam Derneği ("Dernek") olarak, veri sorumlusu sıfatıyla, düzenlediğimiz etkinliklere katılımınız sırasında sizlerden elde edilen kişisel verilerinize büyük önem veriyoruz. (Özet metin; tam metin için iletişim kanallarımızdan talep edebilirsiniz.)
-          </div>
-          <div class="kvkk-controls">
-            <input id="kvkk" class="checkbox" type="checkbox" />
-            <label for="kvkk" style="font-weight:600;margin:0;">KVKK metnini okudum, kişisel verilerimin işlenmesine onay veriyorum.</label>
-          </div>
-        </div>
+      <div class="stat-item">
+        <div class="stat-value" id="activeEvents">0</div>
+        <div class="stat-label">Aktif Etkinlik</div>
       </div>
-
-      <button class="btn" id="submitBtn" disabled>Check-in Yap</button>
-      <div id="status" class="status"></div>
     </div>
 
-    <div class="footer">© Bir Bulut Olsam Derneği · <a href="#" id="openKvkk">KVKK Metni (kısa)</a></div>
+    <!-- Main Grid -->
+    <div class="grid-layout">
+      <!-- Check-in Form -->
+      <div class="card">
+        <h2 class="card-title">
+          <span class="icon">✨</span>
+          Check-in Formu
+        </h2>
+
+        <!-- QR Scanner -->
+        <div class="qr-scanner">
+          <button class="qr-btn" id="qrScanBtn">
+            <span>📷</span> QR Kod ile Check-in
+          </button>
+          <video id="qr-video" playsinline></video>
+          <div id="qr-result" style="margin-top:12px;color:var(--primary);font-weight:600"></div>
+        </div>
+
+        <label for="event">Etkinlik Seç</label>
+        <select id="event">
+          <option value="">Yükleniyor…</option>
+        </select>
+
+        <div class="grid">
+          <div>
+            <label for="name">Ad Soyad *</label>
+            <input id="name" type="text" placeholder="Ad Soyad" autocomplete="name" />
+          </div>
+          <div>
+            <label for="phone">Telefon *</label>
+            <input id="phone" type="tel" placeholder="05xx xxx xx xx" autocomplete="tel" inputmode="tel" />
+          </div>
+        </div>
+
+        <div>
+          <label for="email">E-posta *</label>
+          <input id="email" type="email" placeholder="ornek@eposta.com" autocomplete="email" />
+        </div>
+
+        <!-- KVKK -->
+        <div class="kvkk-wrap" id="kvkkWrap">
+          <div class="kvkk-head">
+            <h3>KVKK Aydınlatma Metni</h3>
+            <span class="kvkk-badge">Bilgilendirme</span>
+          </div>
+          <div class="kvkk-body" id="kvkkBody">
+            <div class="kvkk-content" id="kvkkContent">
+KİŞİSEL VERİLERİN KORUNMASI KANUNU KAPSAMINDA AYDINLATMA METNİ
+Bir Bulut Olsam Derneği ("Dernek") olarak, veri sorumlusu sıfatıyla, düzenlediğimiz etkinliklere katılımınız sırasında sizlerden elde edilen kişisel verilerinize büyük önem veriyoruz. (Özet metin; tam metin için iletişim kanallarımızdan talep edebilirsiniz.)
+            </div>
+            <div class="kvkk-controls">
+              <input id="kvkk" class="checkbox" type="checkbox" />
+              <label for="kvkk" style="font-weight:600;margin:0;">KVKK metnini okudum, onay veriyorum.</label>
+            </div>
+          </div>
+        </div>
+
+        <button class="btn" id="submitBtn" disabled>
+          <span id="btnText">Check-in Yap</span>
+        </button>
+        <div id="status" class="status"></div>
+      </div>
+
+      <!-- Recent Check-ins -->
+      <div class="card">
+        <h2 class="card-title">
+          <span class="icon">👥</span>
+          Son Check-in'ler
+        </h2>
+        <div class="recent-checkins" id="recentCheckins">
+          <div class="empty-state">
+            <div class="icon">☁️</div>
+            <p>Henüz check-in yapılmadı</p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="footer">
+      © 2025 Bir Bulut Olsam Derneği · 
+      <a href="#" id="openKvkk">KVKK Metni</a> · 
+      <a href="#" id="adminLink">Admin Panel</a>
+    </div>
   </div>
 
-  <!-- === TAM EKRAN POP-UP === -->
+  <!-- Success Modal -->
   <div class="overlay" id="overlay" aria-hidden="true">
     <div class="modal" role="dialog" aria-label="Kayıt Başarılı">
       <canvas class="confetti" id="confetti"></canvas>
       <div class="lead">KAYDINIZ YAPILDI</div>
-      <h2>Etkinliğe hoş geldiniz, iyi ki aramızdasınız! 🎉</h2>
-      <p>Kaydınız başarıyla alındı. Girişte görevliye adınızı iletebilirsiniz.</p>
+      <h2>Etkinliğe hoş geldiniz! 🎉</h2>
+      <p>Kaydınız başarıyla alındı. İyi ki aramızdasınız!</p>
       <p class="sub" id="countdownText"></p>
       <button class="btn-close" id="closePopup">Kapat</button>
     </div>
   </div>
 
-  <script>
-    // Apps Script EXEC URL — kendi ID’n ile
-    const WEBAPP_URL = "https://script.google.com/macros/s/AKfycbwDdDI4SIlDsIAa3FEdF5OuTVtTtVGKOHK4NxAQKVFtyA7TF2owetWwW-VOy7_g671k/exec";
+  <!-- QR Scanner Library -->
+  <script src="https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.min.js"></script>
 
-    // Elemanlar
+  <script>
+    // Configuration
+    const WEBAPP_URL = "https://script.google.com/macros/s/AKfycbxYly3fk02UIyIcMbSVerfz79gboNmuLv0c49QhgpxOQlH5XpxflakL9Xce6x43LdIL/exec";
+    const STATS_REFRESH_INTERVAL = 30000; // 30 seconds
+
+    // Elements
     const elEvent = document.getElementById('event');
     const elName  = document.getElementById('name');
     const elPhone = document.getElementById('phone');
@@ -151,92 +810,299 @@ Bir Bulut Olsam Derneği ("Dernek") olarak, veri sorumlusu sıfatıyla, düzenle
     const elKvkk  = document.getElementById('kvkk');
     const elStatus= document.getElementById('status');
     const btn     = document.getElementById('submitBtn');
+    const btnText = document.getElementById('btnText');
     const openKvkk= document.getElementById('openKvkk');
+    const themeToggle = document.getElementById('themeToggle');
+    const themeIcon = document.getElementById('themeIcon');
+    const qrScanBtn = document.getElementById('qrScanBtn');
+    const qrVideo = document.getElementById('qr-video');
+    const qrResult = document.getElementById('qr-result');
 
-    // Popup elemanları
+    // Modal elements
     const overlay = document.getElementById('overlay');
     const closePopupBtn = document.getElementById('closePopup');
     const countdownText = document.getElementById('countdownText');
     const confettiCanvas = document.getElementById('confetti');
-    let popupTimer = null;
 
-    function setStatus(msg, ok=false){
+    // State
+    let popupTimer = null;
+    let statsTimer = null;
+    let qrStream = null;
+    let qrScanning = false;
+    let recentCheckinsData = [];
+
+    // ===== THEME MANAGEMENT =====
+    function initTheme() {
+      const savedTheme = localStorage.getItem('theme') || 'light';
+      document.documentElement.setAttribute('data-theme', savedTheme);
+      updateThemeIcon(savedTheme);
+    }
+
+    function toggleTheme() {
+      const current = document.documentElement.getAttribute('data-theme');
+      const newTheme = current === 'dark' ? 'light' : 'dark';
+      document.documentElement.setAttribute('data-theme', newTheme);
+      localStorage.setItem('theme', newTheme);
+      updateThemeIcon(newTheme);
+    }
+
+    function updateThemeIcon(theme) {
+      themeIcon.textContent = theme === 'dark' ? '☀️' : '🌙';
+    }
+
+    themeToggle.addEventListener('click', toggleTheme);
+
+    // ===== UTILITIES =====
+    function setStatus(msg, ok=false) {
       elStatus.className = 'status ' + (ok ? 'ok' : 'err');
       elStatus.textContent = msg || '';
+      if (msg) {
+        setTimeout(() => elStatus.textContent = '', 5000);
+      }
     }
-    function validatePhone(p){
+
+    function validatePhone(p) {
       const digits = (p||'').replace(/\D/g,'');
       return digits.length >= 10;
     }
-    function validateEmail(e){
+
+    function validateEmail(e) {
       return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(e || '');
     }
 
-    // KVKK kısa metin bağlantısı (sadece aç-kapa)
-    openKvkk.addEventListener('click', (e)=>{ e.preventDefault(); window.scrollTo({ top: document.getElementById('kvkkWrap').offsetTop - 12, behavior: 'smooth' }); });
+    function getInitials(name) {
+      return name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2);
+    }
 
-    // Buton durumunu alanlara göre ayarla
-    function updateButton(){
-      const ok = elEvent.value && elName.value.trim() && validatePhone(elPhone.value) && validateEmail(elEmail.value) && elKvkk.checked;
+    function formatTime(date) {
+      const now = new Date();
+      const diff = Math.floor((now - date) / 1000);
+      
+      if (diff < 60) return 'Az önce';
+      if (diff < 3600) return `${Math.floor(diff/60)} dk önce`;
+      if (diff < 86400) return `${Math.floor(diff/3600)} saat önce`;
+      return date.toLocaleDateString('tr-TR');
+    }
+
+    // ===== FORM VALIDATION =====
+    function updateButton() {
+      const ok = elEvent.value && 
+                 elName.value.trim() && 
+                 validatePhone(elPhone.value) && 
+                 validateEmail(elEmail.value) && 
+                 elKvkk.checked;
       btn.disabled = !ok;
     }
+
     elEvent.addEventListener('change', updateButton);
     elName.addEventListener('input', updateButton);
     elPhone.addEventListener('input', updateButton);
     elEmail.addEventListener('input', updateButton);
     elKvkk.addEventListener('change', updateButton);
 
-    // Etkinlikleri yükle: önce fetch; CORS hatasında JSONP fallback
-    async function loadEventsFetch(){
+    // ===== LOAD EVENTS =====
+    async function loadEventsFetch() {
       const res = await fetch(WEBAPP_URL + "?action=events", { method:'GET' });
       return res.json();
     }
-    function loadEventsJSONP(){
-      return new Promise((resolve,reject)=>{
+
+    function loadEventsJSONP() {
+      return new Promise((resolve,reject) => {
         const cb = 'bboCb_' + Math.random().toString(36).slice(2);
-        window[cb] = (data)=>{ resolve(data); delete window[cb]; s.remove(); };
+        window[cb] = (data) => { resolve(data); delete window[cb]; s.remove(); };
         const s = document.createElement('script');
         s.src = WEBAPP_URL + '?action=events&callback=' + cb;
-        s.onerror = ()=>{ reject(new Error('JSONP yüklenemedi')); s.remove(); delete window[cb]; };
+        s.onerror = () => { reject(new Error('JSONP yüklenemedi')); s.remove(); delete window[cb]; };
         document.body.appendChild(s);
       });
     }
-    async function loadEvents(){
-      try{
+
+    async function loadEvents() {
+      try {
         let data;
-        try{ data = await loadEventsFetch(); }
-        catch(_){ data = await loadEventsJSONP(); }
+        try { 
+          data = await loadEventsFetch(); 
+        } catch(_) { 
+          data = await loadEventsJSONP(); 
+        }
 
         if (!data.ok) throw new Error(data.error || 'Bilinmeyen hata');
+        
         elEvent.innerHTML = '<option value="">Bir etkinlik seçin…</option>';
-        (data.events||[]).forEach(ev=>{
+        (data.events||[]).forEach(ev => {
           const opt = document.createElement('option');
           opt.value = ev.eventCode;
           opt.textContent = `${ev.eventName} (${ev.eventCode})`;
           elEvent.appendChild(opt);
         });
-        if ((data.events||[]).length===0) setStatus('Aktif etkinlik bulunamadı.', false);
-        else setStatus('');
+
+        document.getElementById('activeEvents').textContent = (data.events||[]).length;
+        
+        if ((data.events||[]).length === 0) {
+          setStatus('Aktif etkinlik bulunamadı.', false);
+        } else {
+          setStatus('');
+        }
+        
         updateButton();
-      }catch(err){
+      } catch(err) {
         setStatus('Etkinlik listesi yüklenemedi: ' + err.message, false);
       }
     }
 
-    // === TAM EKRAN POP-UP ===
-    function showPopup(message = 'KAYDINIZ YAPILDI ETKİNLİĞE HOŞGELDİNİZ, İYİ Kİ ARAMIZDASINIZ', autoCloseMs = 4000){
-      // Mesaj üst başlıkta zaten; istersen alt satıra da yazabilirsin
+    // ===== STATS UPDATE =====
+    function updateStats() {
+      // Simulate stats - in production, fetch from backend
+      const today = recentCheckinsData.filter(c => {
+        const d = new Date(c.timestamp);
+        const now = new Date();
+        return d.toDateString() === now.toDateString();
+      }).length;
+
+      document.getElementById('todayCount').textContent = today;
+      document.getElementById('eventCount').textContent = recentCheckinsData.length;
+      document.getElementById('totalCount').textContent = recentCheckinsData.length;
+    }
+
+    // ===== RECENT CHECK-INS =====
+    function addRecentCheckin(data) {
+      recentCheckinsData.unshift({
+        name: data.name,
+        timestamp: new Date(),
+        event: data.eventName || elEvent.options[elEvent.selectedIndex]?.text || 'Etkinlik'
+      });
+
+      if (recentCheckinsData.length > 10) {
+        recentCheckinsData.pop();
+      }
+
+      renderRecentCheckins();
+      updateStats();
+    }
+
+    function renderRecentCheckins() {
+      const container = document.getElementById('recentCheckins');
+      
+      if (recentCheckinsData.length === 0) {
+        container.innerHTML = `
+          <div class="empty-state">
+            <div class="icon">☁️</div>
+            <p>Henüz check-in yapılmadı</p>
+          </div>
+        `;
+        return;
+      }
+
+      container.innerHTML = recentCheckinsData.map(item => `
+        <div class="checkin-item">
+          <div class="avatar">${getInitials(item.name)}</div>
+          <div class="checkin-details">
+            <div class="checkin-name">${item.name}</div>
+            <div class="checkin-time">${formatTime(item.timestamp)}</div>
+          </div>
+        </div>
+      `).join('');
+    }
+
+    // ===== QR CODE SCANNER =====
+    async function startQRScan() {
+      try {
+        if (qrScanning) {
+          stopQRScan();
+          return;
+        }
+
+        qrStream = await navigator.mediaDevices.getUserMedia({ 
+          video: { facingMode: 'environment' } 
+        });
+        
+        qrVideo.srcObject = qrStream;
+        qrVideo.style.display = 'block';
+        qrVideo.play();
+        qrScanning = true;
+        qrScanBtn.textContent = '⏹️ Taramayı Durdur';
+        qrResult.textContent = 'QR kod aranıyor...';
+
+        scanQRCode();
+      } catch(err) {
+        setStatus('Kamera erişimi reddedildi: ' + err.message, false);
+      }
+    }
+
+    function stopQRScan() {
+      if (qrStream) {
+        qrStream.getTracks().forEach(track => track.stop());
+        qrStream = null;
+      }
+      qrVideo.style.display = 'none';
+      qrScanning = false;
+      qrScanBtn.innerHTML = '<span>📷</span> QR Kod ile Check-in';
+      qrResult.textContent = '';
+    }
+
+    function scanQRCode() {
+      if (!qrScanning) return;
+
+      const canvas = document.createElement('canvas');
+      const context = canvas.getContext('2d');
+      
+      canvas.width = qrVideo.videoWidth;
+      canvas.height = qrVideo.videoHeight;
+      
+      context.drawImage(qrVideo, 0, 0, canvas.width, canvas.height);
+      
+      const imageData = context.getImageData(0, 0, canvas.width, canvas.height);
+      const code = jsQR(imageData.data, imageData.width, imageData.height);
+      
+      if (code) {
+        qrResult.textContent = '✓ QR Kod okundu!';
+        processQRData(code.data);
+        stopQRScan();
+      } else {
+        requestAnimationFrame(scanQRCode);
+      }
+    }
+
+    function processQRData(data) {
+      try {
+        // QR data format: eventCode|name|phone|email
+        const parts = data.split('|');
+        if (parts.length >= 4) {
+          const [eventCode, name, phone, email] = parts;
+          
+          // Auto-fill form
+          elEvent.value = eventCode;
+          elName.value = name;
+          elPhone.value = phone;
+          elEmail.value = email;
+          
+          updateButton();
+          setStatus('QR kod başarıyla okundu! Lütfen bilgileri kontrol edin.', true);
+        } else {
+          setStatus('Geçersiz QR kod formatı', false);
+        }
+      } catch(err) {
+        setStatus('QR kod işlenirken hata: ' + err.message, false);
+      }
+    }
+
+    qrScanBtn.addEventListener('click', startQRScan);
+
+    // ===== SUCCESS MODAL =====
+    function showPopup(message = 'KAYDINIZ YAPILDI', autoCloseMs = 4000) {
       overlay.classList.add('open');
       overlay.setAttribute('aria-hidden','false');
       startConfetti();
+      playSuccessSound();
 
       if (popupTimer) clearInterval(popupTimer);
       let ms = autoCloseMs;
       countdownText.textContent = (ms>0) ? Math.ceil(ms/1000) + " sn sonra kapanacak." : "";
-      if (ms>0){
-        popupTimer = setInterval(()=>{
+      
+      if (ms>0) {
+        popupTimer = setInterval(() => {
           ms -= 1000;
-          if (ms <= 0){
+          if (ms <= 0) {
             hidePopup();
           } else {
             countdownText.textContent = Math.ceil(ms/1000) + " sn sonra kapanacak.";
@@ -244,54 +1110,110 @@ Bir Bulut Olsam Derneği ("Dernek") olarak, veri sorumlusu sıfatıyla, düzenle
         }, 1000);
       }
     }
-    function hidePopup(){
+
+    function hidePopup() {
       overlay.classList.remove('open');
       overlay.setAttribute('aria-hidden','true');
       stopConfetti();
-      if (popupTimer) { clearInterval(popupTimer); popupTimer=null; }
+      if (popupTimer) { 
+        clearInterval(popupTimer); 
+        popupTimer=null; 
+      }
     }
-    closePopupBtn.addEventListener('click', hidePopup);
-    overlay.addEventListener('click', (e)=>{ if(e.target === overlay) hidePopup(); });
 
-    // Basit konfeti
+    closePopupBtn.addEventListener('click', hidePopup);
+    overlay.addEventListener('click', (e) => { 
+      if(e.target === overlay) hidePopup(); 
+    });
+
+    // ===== SUCCESS SOUND =====
+    function playSuccessSound() {
+      const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+      const notes = [523.25, 659.25, 783.99]; // C, E, G
+      
+      notes.forEach((freq, i) => {
+        const oscillator = audioContext.createOscillator();
+        const gainNode = audioContext.createGain();
+        
+        oscillator.connect(gainNode);
+        gainNode.connect(audioContext.destination);
+        
+        oscillator.frequency.value = freq;
+        oscillator.type = 'sine';
+        
+        gainNode.gain.setValueAtTime(0.3, audioContext.currentTime + i * 0.1);
+        gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + i * 0.1 + 0.3);
+        
+        oscillator.start(audioContext.currentTime + i * 0.1);
+        oscillator.stop(audioContext.currentTime + i * 0.1 + 0.3);
+      });
+    }
+
+    // ===== CONFETTI =====
     let confettiRAF = null;
     let pieces = [];
-    function startConfetti(){
+
+    function startConfetti() {
       const ctx = confettiCanvas.getContext('2d');
       resizeConfetti();
-      pieces = Array.from({length:90}).map(()=>({
-        x: Math.random()*confettiCanvas.width,
-        y: -Math.random()*confettiCanvas.height*0.6,
-        r: Math.random()*5+3,
-        vy: Math.random()*2+1.2,
-        vx: (Math.random()-0.5)*1.6,
-        hue: Math.random()*360
+      
+      pieces = Array.from({length:100}).map(() => ({
+        x: Math.random() * confettiCanvas.width,
+        y: -Math.random() * confettiCanvas.height * 0.6,
+        r: Math.random() * 6 + 3,
+        vy: Math.random() * 3 + 1.5,
+        vx: (Math.random()-0.5) * 2,
+        hue: Math.random() * 360,
+        rotation: Math.random() * Math.PI * 2,
+        rotationSpeed: (Math.random() - 0.5) * 0.2
       }));
-      function step(){
-        ctx.clearRect(0,0,confettiCanvas.width,confettiCanvas.height);
-        pieces.forEach(p=>{
-          ctx.beginPath(); ctx.arc(p.x,p.y,p.r,0,Math.PI*2);
-          ctx.fillStyle = `hsl(${p.hue},85%,60%)`;
+      
+      function step() {
+        ctx.clearRect(0, 0, confettiCanvas.width, confettiCanvas.height);
+        
+        pieces.forEach(p => {
+          ctx.save();
+          ctx.translate(p.x, p.y);
+          ctx.rotate(p.rotation);
+          
+          ctx.beginPath();
+          ctx.rect(-p.r/2, -p.r/2, p.r, p.r);
+          ctx.fillStyle = `hsl(${p.hue}, 85%, 60%)`;
           ctx.fill();
-          p.y += p.vy; p.x += p.vx; if(p.y>confettiCanvas.height+10) p.y = -10;
+          
+          ctx.restore();
+          
+          p.y += p.vy;
+          p.x += p.vx;
+          p.rotation += p.rotationSpeed;
+          
+          if(p.y > confettiCanvas.height + 10) {
+            p.y = -10;
+            p.x = Math.random() * confettiCanvas.width;
+          }
         });
+        
         confettiRAF = requestAnimationFrame(step);
       }
+      
       step();
       window.addEventListener('resize', resizeConfetti);
     }
-    function stopConfetti(){
+
+    function stopConfetti() {
       if (confettiRAF) cancelAnimationFrame(confettiRAF);
       confettiRAF = null;
       window.removeEventListener('resize', resizeConfetti);
     }
-    function resizeConfetti(){
-      confettiCanvas.width = document.querySelector('.modal').clientWidth;
-      confettiCanvas.height = document.querySelector('.modal').clientHeight;
+
+    function resizeConfetti() {
+      const modal = document.querySelector('.modal');
+      confettiCanvas.width = modal.clientWidth;
+      confettiCanvas.height = modal.clientHeight;
     }
 
-    // PRE-FLIGHT tetiklemeyen POST (URL-encoded)
-    async function submitCheckin(){
+    // ===== SUBMIT CHECK-IN =====
+    async function submitCheckin() {
       setStatus('');
       const eventCode = elEvent.value;
       const name  = elName.value.trim();
@@ -301,41 +1223,88 @@ Bir Bulut Olsam Derneği ("Dernek") olarak, veri sorumlusu sıfatıyla, düzenle
 
       if (!eventCode) return setStatus('Lütfen bir etkinlik seçin.', false);
       if (!name) return setStatus('Lütfen ad soyad girin.', false);
-      if (!validatePhone(phone)) return setStatus('Telefon formatı hatalı görünüyor.', false);
+      if (!validatePhone(phone)) return setStatus('Telefon formatı hatalı.', false);
       if (!validateEmail(email)) return setStatus('Lütfen geçerli bir e-posta girin.', false);
       if (!kvkk) return setStatus('KVKK onayı gereklidir.', false);
 
       btn.disabled = true;
-      try{
+      btnText.innerHTML = '<span class="spinner"></span> Kaydediliyor...';
+      
+      try {
         const body = new URLSearchParams({ eventCode, name, phone, email });
         const res = await fetch(WEBAPP_URL, {
           method:'POST',
           headers:{ 'Content-Type':'application/x-www-form-urlencoded;charset=UTF-8' },
           body
         });
-        const ok = res.ok ? await res.json().catch(()=>({ok:true})) : null;
-        if (!res.ok || (ok && ok.ok===false)) {
+        
+        const ok = res.ok ? await res.json().catch(() => ({ok:true})) : null;
+        
+        if (!res.ok || (ok && ok.ok === false)) {
           throw new Error((ok && ok.error) || 'Sunucudan beklenmedik yanıt');
         }
 
-        // Formu resetle
-        setStatus('Check-in alındı. İyi etkinlikler! ☁️', true);
-        elName.value=''; elPhone.value=''; elEmail.value='';
-        elKvkk.checked=false;
+        // Success
+        setStatus('Check-in başarılı! İyi etkinlikler! ☁️', true);
+        
+        // Add to recent check-ins
+        addRecentCheckin({ name, eventCode });
+        
+        // Reset form
+        elName.value = '';
+        elPhone.value = '';
+        elEmail.value = '';
+        elKvkk.checked = false;
         updateButton();
 
-        // TAM EKRAN POP-UP
+        // Show popup
         showPopup();
-      }catch(err){
+        
+      } catch(err) {
         setStatus('Gönderim hatası: ' + err.message, false);
-      }finally{
+      } finally {
         btn.disabled = false;
+        btnText.textContent = 'Check-in Yap';
       }
     }
-    document.getElementById('submitBtn').addEventListener('click', submitCheckin);
 
-    // Başlat
-    (function init(){ loadEvents(); updateButton(); })();
+    btn.addEventListener('click', submitCheckin);
+
+    // ===== KVKK LINK =====
+    openKvkk.addEventListener('click', (e) => { 
+      e.preventDefault(); 
+      window.scrollTo({ 
+        top: document.getElementById('kvkkWrap').offsetTop - 80, 
+        behavior: 'smooth' 
+      }); 
+    });
+
+    // ===== ADMIN LINK =====
+    document.getElementById('adminLink').addEventListener('click', (e) => {
+      e.preventDefault();
+      alert('Admin panel yakında eklenecek! 🚀');
+    });
+
+    // ===== INITIALIZATION =====
+    function init() {
+      initTheme();
+      loadEvents();
+      updateButton();
+      renderRecentCheckins();
+      updateStats();
+      
+      // Refresh stats periodically
+      statsTimer = setInterval(updateStats, STATS_REFRESH_INTERVAL);
+    }
+
+    // Start app
+    init();
+
+    // Cleanup on page unload
+    window.addEventListener('beforeunload', () => {
+      stopQRScan();
+      if (statsTimer) clearInterval(statsTimer);
+    });
   </script>
 </body>
 </html>
