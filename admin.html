@@ -333,24 +333,73 @@
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
   <script>
+    // Şifre Koruması
+    window.addEventListener('DOMContentLoaded', () => {
+      const savedPassword = sessionStorage.getItem('adminAuth');
+      if (savedPassword !== 'ibekler123') {
+        const password = prompt('Admin Paneli Şifresi:');
+        if (password !== 'ibekler123') {
+          alert('❌ Yanlış şifre! Giriş reddedildi.');
+          window.location.href = 'index-v2.html';
+          return;
+        }
+        sessionStorage.setItem('adminAuth', password);
+      }
+    });
+
     const WEBAPP_URL = "https://script.google.com/macros/s/AKfycbwDdDI4SIlDsIAa3FEdF5OuTVtTtVGKOHK4NxAQKVFtyA7TF2owetWwW-VOy7_g671k/exec";
     
     let allEventStats = [];
 
+    // Load stats with JSONP fallback
+    async function loadStatsFetch() {
+      const response = await fetch(WEBAPP_URL + '?action=stats');
+      if (!response.ok) throw new Error('HTTP error');
+      return response.json();
+    }
+
+    function loadStatsJSONP() {
+      return new Promise((resolve, reject) => {
+        const cb = 'statsCallback_' + Math.random().toString(36).slice(2);
+        window[cb] = (data) => { 
+          resolve(data); 
+          delete window[cb]; 
+          script.remove(); 
+        };
+        const script = document.createElement('script');
+        script.src = WEBAPP_URL + '?action=stats&callback=' + cb;
+        script.onerror = () => { 
+          reject(new Error('JSONP failed')); 
+          script.remove(); 
+          delete window[cb]; 
+        };
+        document.body.appendChild(script);
+      });
+    }
+
     // Load stats on page load
     async function loadStats() {
       try {
-        const response = await fetch(WEBAPP_URL + '?action=stats');
-        const data = await response.json();
+        let data;
         
-        if (!data.ok) throw new Error('Stats yüklenemedi');
+        // Try fetch first, then JSONP fallback
+        try {
+          data = await loadStatsFetch();
+        } catch(fetchErr) {
+          console.log('Fetch failed, trying JSONP...', fetchErr);
+          data = await loadStatsJSONP();
+        }
+        
+        if (!data.ok) {
+          throw new Error(data.error || 'API returned ok:false');
+        }
         
         const stats = data.stats;
         
         // Update stat cards
-        document.getElementById('totalCheckins').textContent = stats.totalCheckins;
-        document.getElementById('todayCheckins').textContent = stats.todayCheckins;
-        document.getElementById('activeEvents').textContent = stats.activeEvents;
+        document.getElementById('totalCheckins').textContent = stats.totalCheckins || 0;
+        document.getElementById('todayCheckins').textContent = stats.todayCheckins || 0;
+        document.getElementById('activeEvents').textContent = stats.activeEvents || 0;
         
         const avg = stats.activeEvents > 0 
           ? Math.round(stats.totalCheckins / stats.activeEvents) 
@@ -367,11 +416,22 @@
         renderChart(allEventStats);
         
       } catch(err) {
-        console.error('Stats yükleme hatası:', err);
+        console.error('Stats yükleme hatası detayı:', err);
         document.getElementById('eventStatsTable').innerHTML = `
           <div class="empty-state">
             <div class="icon">❌</div>
-            <p>İstatistikler yüklenemedi</p>
+            <p style="color:#b91c1c;"><strong>İstatistikler yüklenemedi</strong></p>
+            <p style="font-size:0.9rem;color:#64748b;">Hata: ${err.message}</p>
+            <p style="font-size:0.85rem;color:#64748b;">
+              <strong>Olası Çözümler:</strong><br>
+              1. Apps Script'in yeni versiyon olarak deploy edildiğinden emin olun<br>
+              2. Web uygulaması erişim izninin "Herkes" olarak ayarlandığından emin olun<br>
+              3. Tarayıcı console'unu açıp detaylı hatayı kontrol edin<br>
+              4. <a href="test-stats.html" target="_blank" style="color:#5B8DEF;">Test sayfasını</a> kullanarak API'yi kontrol edin
+            </p>
+            <button class="btn btn-primary" onclick="loadStats()" style="margin-top:12px;">
+              🔄 Tekrar Dene
+            </button>
           </div>
         `;
       }
