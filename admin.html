@@ -1,0 +1,524 @@
+<!doctype html>
+<html lang="tr">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
+  <title>Admin Panel - Bir Bulut Olsam</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  
+  <style>
+    :root{
+      --bg:#F4F7FF; 
+      --card:#FFFFFF; 
+      --primary:#5B8DEF; 
+      --primary-700:#355CD6; 
+      --accent:#8EE1F7;
+      --ok:#0f766e; 
+      --err:#b91c1c; 
+      --text:#111827; 
+      --muted:#64748b; 
+      --shadow:0 10px 30px rgba(43,78,255,.12);
+      --radius:18px;
+    }
+    
+    *{box-sizing:border-box;margin:0;padding:0}
+    
+    body{
+      margin:0;
+      background:radial-gradient(1200px 600px at 80% -10%, #dbeafe 0%, transparent 60%), var(--bg);
+      color:var(--text);
+      font-family:'Inter',ui-sans-serif,system-ui,-apple-system,"Segoe UI",Roboto,Arial;
+      min-height:100vh;
+    }
+    
+    .navbar{
+      background:var(--card);
+      border-bottom:1px solid rgba(0,0,0,.08);
+      padding:20px 0;
+      position:sticky;
+      top:0;
+      z-index:100;
+      box-shadow:var(--shadow);
+    }
+    
+    .navbar-content{
+      max-width:1400px;
+      margin:0 auto;
+      padding:0 20px;
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+    }
+    
+    .navbar-brand h1{
+      font-size:1.5rem;
+      background:linear-gradient(135deg,var(--primary),var(--accent));
+      -webkit-background-clip:text;
+      background-clip:text;
+      color:transparent;
+    }
+    
+    .container{
+      max-width:1400px;
+      margin:40px auto;
+      padding:0 20px;
+    }
+    
+    .stats-grid{
+      display:grid;
+      grid-template-columns:repeat(auto-fit,minmax(250px,1fr));
+      gap:20px;
+      margin-bottom:40px;
+    }
+    
+    .stat-card{
+      background:var(--card);
+      padding:24px;
+      border-radius:var(--radius);
+      box-shadow:var(--shadow);
+      border:1px solid rgba(0,0,0,.05);
+      transition:transform 0.2s;
+    }
+    
+    .stat-card:hover{
+      transform:translateY(-4px);
+      box-shadow:0 20px 40px rgba(43,78,255,.18);
+    }
+    
+    .stat-label{
+      font-size:0.9rem;
+      color:var(--muted);
+      font-weight:600;
+      margin-bottom:8px;
+    }
+    
+    .stat-value{
+      font-size:2.5rem;
+      font-weight:800;
+      background:linear-gradient(135deg,var(--primary),var(--accent));
+      -webkit-background-clip:text;
+      background-clip:text;
+      color:transparent;
+    }
+    
+    .card{
+      background:var(--card);
+      border-radius:var(--radius);
+      box-shadow:var(--shadow);
+      padding:28px;
+      margin-bottom:24px;
+      border:1px solid rgba(0,0,0,.05);
+    }
+    
+    .card-header{
+      display:flex;
+      justify-content:space-between;
+      align-items:center;
+      margin-bottom:24px;
+    }
+    
+    .card-title{
+      font-size:1.5rem;
+      font-weight:700;
+    }
+    
+    .btn{
+      padding:12px 24px;
+      border:0;
+      border-radius:10px;
+      font-weight:600;
+      font-size:0.95rem;
+      cursor:pointer;
+      transition:all 0.2s;
+      display:inline-flex;
+      align-items:center;
+      gap:8px;
+    }
+    
+    .btn-primary{
+      background:linear-gradient(135deg,var(--primary),var(--primary-700));
+      color:white;
+      box-shadow:0 6px 16px rgba(91,141,239,.3);
+    }
+    
+    .btn-primary:hover{
+      transform:translateY(-2px);
+      box-shadow:0 10px 24px rgba(91,141,239,.4);
+    }
+    
+    .btn-secondary{
+      background:#f1f5f9;
+      color:var(--text);
+    }
+    
+    .btn-secondary:hover{
+      background:#e2e8f0;
+    }
+    
+    table{
+      width:100%;
+      border-collapse:collapse;
+    }
+    
+    thead{
+      background:linear-gradient(135deg,rgba(91,141,239,.05),rgba(142,225,247,.05));
+    }
+    
+    th{
+      padding:14px;
+      text-align:left;
+      font-weight:700;
+      font-size:0.9rem;
+      color:var(--text);
+      border-bottom:2px solid var(--primary);
+    }
+    
+    td{
+      padding:14px;
+      border-bottom:1px solid #e5e7eb;
+    }
+    
+    tr:hover{
+      background:rgba(91,141,239,.03);
+    }
+    
+    .badge{
+      padding:4px 12px;
+      border-radius:999px;
+      font-size:0.8rem;
+      font-weight:600;
+    }
+    
+    .badge-success{
+      background:#dcfce7;
+      color:#15803d;
+    }
+    
+    .badge-info{
+      background:#dbeafe;
+      color:#1e40af;
+    }
+    
+    .chart-container{
+      position:relative;
+      height:300px;
+      margin-top:20px;
+    }
+    
+    canvas{
+      max-width:100%;
+    }
+    
+    .loading{
+      text-align:center;
+      padding:40px;
+      color:var(--muted);
+    }
+    
+    .spinner{
+      display:inline-block;
+      width:40px;
+      height:40px;
+      border:4px solid rgba(91,141,239,.2);
+      border-top-color:var(--primary);
+      border-radius:50%;
+      animation:spin 0.8s linear infinite;
+    }
+    
+    @keyframes spin{
+      to{transform:rotate(360deg)}
+    }
+    
+    .search-box{
+      position:relative;
+      margin-bottom:20px;
+    }
+    
+    .search-box input{
+      width:100%;
+      padding:14px 16px;
+      border:2px solid #e5e7eb;
+      border-radius:10px;
+      font-size:1rem;
+      outline:none;
+      transition:all 0.2s;
+    }
+    
+    .search-box input:focus{
+      border-color:var(--primary);
+      box-shadow:0 0 0 4px rgba(91,141,239,.1);
+    }
+    
+    .empty-state{
+      text-align:center;
+      padding:60px 20px;
+      color:var(--muted);
+    }
+    
+    .empty-state .icon{
+      font-size:4rem;
+      margin-bottom:16px;
+      opacity:0.5;
+    }
+  </style>
+</head>
+<body>
+  <nav class="navbar">
+    <div class="navbar-content">
+      <div class="navbar-brand">
+        <h1>☁️ Admin Panel - Bir Bulut Olsam</h1>
+      </div>
+      <div>
+        <button class="btn btn-secondary" onclick="location.href='index.html'">
+          ← Geri Dön
+        </button>
+      </div>
+    </div>
+  </nav>
+
+  <div class="container">
+    <!-- Stats Cards -->
+    <div class="stats-grid">
+      <div class="stat-card">
+        <div class="stat-label">Toplam Check-in</div>
+        <div class="stat-value" id="totalCheckins">0</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">Bugün</div>
+        <div class="stat-value" id="todayCheckins">0</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">Aktif Etkinlikler</div>
+        <div class="stat-value" id="activeEvents">0</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">Ortalama Katılım</div>
+        <div class="stat-value" id="avgParticipation">0</div>
+      </div>
+    </div>
+
+    <!-- Event Statistics -->
+    <div class="card">
+      <div class="card-header">
+        <h2 class="card-title">Etkinlik İstatistikleri</h2>
+        <button class="btn btn-primary" onclick="exportAllData()">
+          📊 Tümünü Dışa Aktar
+        </button>
+      </div>
+      
+      <div class="search-box">
+        <input type="text" id="searchInput" placeholder="🔍 Etkinlik ara...">
+      </div>
+
+      <div id="eventStatsTable">
+        <div class="loading">
+          <div class="spinner"></div>
+          <p>Veriler yükleniyor...</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Chart -->
+    <div class="card">
+      <div class="card-header">
+        <h2 class="card-title">Katılım Grafiği</h2>
+      </div>
+      <div class="chart-container">
+        <canvas id="participationChart"></canvas>
+      </div>
+    </div>
+  </div>
+
+  <!-- Chart.js -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+  <script>
+    const WEBAPP_URL = "https://script.google.com/macros/s/AKfycbwDdDI4SIlDsIAa3FEdF5OuTVtTtVGKOHK4NxAQKVFtyA7TF2owetWwW-VOy7_g671k/exec";
+    
+    let allEventStats = [];
+
+    // Load stats on page load
+    async function loadStats() {
+      try {
+        const response = await fetch(WEBAPP_URL + '?action=stats');
+        const data = await response.json();
+        
+        if (!data.ok) throw new Error('Stats yüklenemedi');
+        
+        const stats = data.stats;
+        
+        // Update stat cards
+        document.getElementById('totalCheckins').textContent = stats.totalCheckins;
+        document.getElementById('todayCheckins').textContent = stats.todayCheckins;
+        document.getElementById('activeEvents').textContent = stats.activeEvents;
+        
+        const avg = stats.activeEvents > 0 
+          ? Math.round(stats.totalCheckins / stats.activeEvents) 
+          : 0;
+        document.getElementById('avgParticipation').textContent = avg;
+        
+        // Store event stats
+        allEventStats = stats.eventStats || [];
+        
+        // Render table
+        renderEventStatsTable(allEventStats);
+        
+        // Render chart
+        renderChart(allEventStats);
+        
+      } catch(err) {
+        console.error('Stats yükleme hatası:', err);
+        document.getElementById('eventStatsTable').innerHTML = `
+          <div class="empty-state">
+            <div class="icon">❌</div>
+            <p>İstatistikler yüklenemedi</p>
+          </div>
+        `;
+      }
+    }
+
+    // Render event stats table
+    function renderEventStatsTable(eventStats) {
+      const container = document.getElementById('eventStatsTable');
+      
+      if (eventStats.length === 0) {
+        container.innerHTML = `
+          <div class="empty-state">
+            <div class="icon">📊</div>
+            <p>Henüz veri bulunmuyor</p>
+          </div>
+        `;
+        return;
+      }
+      
+      const html = `
+        <table>
+          <thead>
+            <tr>
+              <th>#</th>
+              <th>Etkinlik Adı</th>
+              <th>Etkinlik Kodu</th>
+              <th>Katılımcı Sayısı</th>
+              <th>İşlemler</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${eventStats.map((event, index) => `
+              <tr>
+                <td><strong>${index + 1}</strong></td>
+                <td>${event.eventName}</td>
+                <td><span class="badge badge-info">${event.eventCode}</span></td>
+                <td><span class="badge badge-success">${event.count} kişi</span></td>
+                <td>
+                  <button class="btn btn-secondary" onclick="exportEventData('${event.eventCode}')">
+                    📥 Dışa Aktar
+                  </button>
+                </td>
+              </tr>
+            `).join('')}
+          </tbody>
+        </table>
+      `;
+      
+      container.innerHTML = html;
+    }
+
+    // Search functionality
+    document.getElementById('searchInput').addEventListener('input', (e) => {
+      const query = e.target.value.toLowerCase();
+      const filtered = allEventStats.filter(event => 
+        event.eventName.toLowerCase().includes(query) ||
+        event.eventCode.toLowerCase().includes(query)
+      );
+      renderEventStatsTable(filtered);
+    });
+
+    // Export single event data
+    function exportEventData(eventCode) {
+      const url = `${WEBAPP_URL}?action=export&eventCode=${eventCode}`;
+      window.open(url, '_blank');
+    }
+
+    // Export all data
+    function exportAllData() {
+      const url = `${WEBAPP_URL}?action=export`;
+      window.open(url, '_blank');
+    }
+
+    // Render chart
+    function renderChart(eventStats) {
+      const ctx = document.getElementById('participationChart').getContext('2d');
+      
+      // Get top 10 events
+      const topEvents = eventStats.slice(0, 10);
+      
+      new Chart(ctx, {
+        type: 'bar',
+        data: {
+          labels: topEvents.map(e => e.eventName),
+          datasets: [{
+            label: 'Katılımcı Sayısı',
+            data: topEvents.map(e => e.count),
+            backgroundColor: 'rgba(91, 141, 239, 0.6)',
+            borderColor: 'rgba(91, 141, 239, 1)',
+            borderWidth: 2,
+            borderRadius: 8
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: {
+            legend: {
+              display: false
+            },
+            tooltip: {
+              backgroundColor: 'rgba(0, 0, 0, 0.8)',
+              padding: 12,
+              titleFont: {
+                size: 14,
+                weight: 'bold'
+              },
+              bodyFont: {
+                size: 13
+              },
+              borderColor: '#5B8DEF',
+              borderWidth: 2
+            }
+          },
+          scales: {
+            y: {
+              beginAtZero: true,
+              ticks: {
+                precision: 0,
+                font: {
+                  size: 12
+                }
+              },
+              grid: {
+                color: 'rgba(0, 0, 0, 0.05)'
+              }
+            },
+            x: {
+              ticks: {
+                font: {
+                  size: 11
+                }
+              },
+              grid: {
+                display: false
+              }
+            }
+          }
+        }
+      });
+    }
+
+    // Initialize
+    loadStats();
+    
+    // Auto-refresh every 30 seconds
+    setInterval(loadStats, 30000);
+  </script>
+</body>
+</html>
