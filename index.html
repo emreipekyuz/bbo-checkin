@@ -218,6 +218,56 @@
     
     .star-tooltip.show { opacity:1; }
     
+    /* Participants List */
+    .participants-list {
+      background:rgba(255,255,255,0.05);
+      border-radius:12px;
+      padding:12px;
+      margin-bottom:16px;
+      max-height:160px;
+      overflow-y:auto;
+      position:relative;
+      z-index:2;
+    }
+    
+    .participants-list::-webkit-scrollbar {
+      width:4px;
+    }
+    
+    .participants-list::-webkit-scrollbar-track {
+      background:rgba(255,255,255,0.1);
+      border-radius:2px;
+    }
+    
+    .participants-list::-webkit-scrollbar-thumb {
+      background:rgba(255,255,255,0.3);
+      border-radius:2px;
+    }
+    
+    .participants-grid {
+      display:flex;
+      flex-wrap:wrap;
+      gap:8px;
+    }
+    
+    .participant-item {
+      font-size:0.8rem;
+      color:#fff;
+      padding:4px 10px;
+      background:rgba(255,255,255,0.1);
+      border-radius:16px;
+      border:1px solid rgba(255,255,255,0.2);
+      white-space:nowrap;
+    }
+    
+    .participants-empty {
+      text-align:center;
+      color:rgba(255,255,255,0.5);
+      font-size:0.85rem;
+      padding:16px;
+      font-style:italic;
+    }
+    
     /* MOOD SELECTOR */
     .mood-container {
       background:var(--card);
@@ -648,7 +698,14 @@
     <!-- Constellation Map -->
     <div class="constellation-container">
       <div class="constellation-title">⭐ Takımyıldızımız</div>
-      <div class="constellation-subtitle">Her katılımcı bir yıldız, birlikte parıldıyoruz!</div>
+      <div class="constellation-subtitle" id="constellationSubtitle">Son katılımcılarımız burada!</div>
+      
+      <!-- Participants List -->
+      <div class="participants-list" id="participantsList">
+        <div class="participants-empty">Katılımcılar yükleniyor...</div>
+      </div>
+      
+      <!-- Constellation Canvas -->
       <div class="constellation-canvas" id="constellationCanvas"></div>
       <div class="star-tooltip" id="starTooltip"></div>
     </div>
@@ -742,8 +799,8 @@ Bir Bulut Olsam Derneği ("Dernek") olarak, veri sorumlusu sıfatıyla, düzenle
 
   <script>
     // Configuration
-    const WEBAPP_URL = "https://script.google.com/macros/s/AKfycbzCMNntXYm4VEKTqn-a6JlcSyEDCejUbz1N2ct5kIRxX6tWy4VFjSJ2RbTwUuOrUjq2/exec";
-    const REFRESH_INTERVAL = 30000;
+    const WEBAPP_URL = "https://script.google.com/macros/s/AKfycbzDoFgnXLbcHtQY08Nbx8jx5DSWqP-JOBCAwibNbaLh2KsgWoMqbVYZ6DUuDXgybhkL/exec";
+    const REFRESH_INTERVAL = 60000; // 60 seconds
 
     // Elements
     const elEvent = document.getElementById('event');
@@ -806,16 +863,38 @@ Bir Bulut Olsam Derneği ("Dernek") olarak, veri sorumlusu sıfatıyla, düzenle
     // ===== CONSTELLATION MAP =====
     function initConstellation() {
       const canvas = document.getElementById('constellationCanvas');
-      // Start with empty canvas
+      const width = canvas.offsetWidth;
+      const height = canvas.offsetHeight;
+      
+      // Generate 20 fixed stars
+      stars = [];
+      for (let i = 0; i < 20; i++) {
+        const star = document.createElement('div');
+        star.className = 'star';
+        star.style.left = Math.random() * (width - 10) + 'px';
+        star.style.top = Math.random() * (height - 10) + 'px';
+        
+        // Random twinkle delay
+        star.style.animationDelay = Math.random() * 3 + 's';
+        
+        canvas.appendChild(star);
+        stars.push({
+          element: star,
+          x: parseFloat(star.style.left),
+          y: parseFloat(star.style.top)
+        });
+      }
+      
+      // Draw constellation lines
+      drawConstellationLines();
+      
+      // Load participant names
       loadConstellationData();
     }
     
     async function loadConstellationData() {
-      const eventCode = elEvent.value;
-      if (!eventCode) return;
-      
       try {
-        let url = WEBAPP_URL + '?action=participants&eventCode=' + eventCode;
+        let url = WEBAPP_URL + '?action=participants&limit=20';
         
         let data;
         try {
@@ -833,67 +912,39 @@ Bir Bulut Olsam Derneği ("Dernek") olarak, veri sorumlusu sıfatıyla, düzenle
         }
         
         if (data.ok && data.participants) {
-          renderConstellation(data.participants);
+          renderParticipantsList(data.participants);
         }
       } catch(err) {
         console.error('Constellation load error:', err);
       }
     }
     
-    function renderConstellation(participants) {
-      const canvas = document.getElementById('constellationCanvas');
-      const width = canvas.offsetWidth;
-      const height = canvas.offsetHeight;
+    function renderParticipantsList(participants) {
+      const listEl = document.getElementById('participantsList');
+      const subtitle = document.getElementById('constellationSubtitle');
       
-      // Clear existing
-      canvas.innerHTML = '';
-      stars = [];
-      
-      // Generate stars for participants
-      participants.forEach((p, i) => {
-        // Create star wrapper
-        const starWrapper = document.createElement('div');
-        starWrapper.style.position = 'absolute';
-        starWrapper.style.left = Math.random() * (width - 60) + 30 + 'px'; // More padding for names
-        starWrapper.style.top = Math.random() * (height - 40) + 20 + 'px';
-        
-        // Create star
-        const star = document.createElement('div');
-        star.className = 'star';
-        star.style.position = 'relative';
-        star.style.left = '0';
-        star.style.top = '0';
-        star.dataset.name = p.name;
-        
-        // Create name label (always visible)
-        const nameLabel = document.createElement('div');
-        nameLabel.className = 'star-name';
-        nameLabel.textContent = p.name;
-        
-        // Append star and name to wrapper
-        starWrapper.appendChild(star);
-        starWrapper.appendChild(nameLabel);
-        canvas.appendChild(starWrapper);
-        
-        stars.push({
-          element: starWrapper,
-          x: parseFloat(starWrapper.style.left),
-          y: parseFloat(starWrapper.style.top)
-        });
-      });
-      
-      // Draw lines between nearby stars
-      if (stars.length > 1) {
-        drawConstellationLines();
+      if (participants.length === 0) {
+        listEl.innerHTML = '<div class="participants-empty">Henüz katılımcı yok. İlk sen ol! 🌟</div>';
+        subtitle.textContent = 'Henüz kimse katılmadı!';
+        return;
       }
       
       // Update subtitle
-      const subtitle = document.querySelector('.constellation-subtitle');
-      if (participants.length === 0) {
-        subtitle.textContent = 'Henüz kimse check-in yapmadı. İlk sen ol!';
-      } else {
-        subtitle.textContent = `${participants.length} kişi bugün katıldı! Sen de aramıza katıl!`;
-      }
+      subtitle.textContent = `Son ${participants.length} katılımcımız ⭐`;
+      
+      // Render participants
+      const grid = document.createElement('div');
+      grid.className = 'participants-grid';
+      
+      participants.forEach((p, i) => {
+        const item = document.createElement('div');
+        item.className = 'participant-item';
+        item.textContent = (i + 1) + '. ' + p.name;
+        grid.appendChild(item);
+      });
+      
+      listEl.innerHTML = '';
+      listEl.appendChild(grid);
     }
 
     function drawConstellationLines() {
@@ -907,7 +958,7 @@ Bir Bulut Olsam Derneği ("Dernek") olarak, veri sorumlusu sıfatıyla, düzenle
             Math.pow(stars[i].y - stars[j].y, 2)
           );
           
-          if (dist < 120) { // Increased distance for better connections
+          if (dist < 100) {
             const line = document.createElement('div');
             line.className = 'star-line';
             line.style.left = stars[i].x + 4 + 'px';
@@ -1121,13 +1172,12 @@ Bir Bulut Olsam Derneği ("Dernek") olarak, veri sorumlusu sıfatıyla, düzenle
     }
 
     elEvent.addEventListener('change', () => {
-      updateHeart();
-      loadConstellationData();
+      updateButton();
       loadMoodStats();
     });
-    elName.addEventListener('input', updateHeart);
-    elPhone.addEventListener('input', updateHeart);
-    elEmail.addEventListener('input', updateHeart);
+    elName.addEventListener('input', updateButton);
+    elPhone.addEventListener('input', updateButton);
+    elEmail.addEventListener('input', updateButton);
     elKvkk.addEventListener('change', updateButton);
 
     // ===== LOAD EVENTS =====
@@ -1388,11 +1438,11 @@ Bir Bulut Olsam Derneği ("Dernek") olarak, veri sorumlusu sıfatıyla, düzenle
       loadEvents();
       updateButton();
       
-      // Auto-refresh constellation and mood stats every 30 seconds
+      // Auto-refresh constellation and mood stats every 60 seconds
       setInterval(() => {
+        loadConstellationData(); // Refresh participant names
         if (elEvent.value) {
-          loadConstellationData();
-          loadMoodStats();
+          loadMoodStats(); // Refresh mood stats
         }
       }, REFRESH_INTERVAL);
     }
