@@ -249,7 +249,7 @@
           <div class="bg-blue-600 p-4 text-white relative overflow-hidden">
             <div class="absolute -right-6 -top-6 text-7xl opacity-10">☁️</div>
             <h3 class="font-bold text-lg tracking-widest uppercase">BİNİŞ KARTI</h3>
-            <p class="text-blue-200 text-[10px] uppercase font-bold tracking-wide">Bir Bulut Olsam Etkinlikleri</p>
+            <p class="text-blue-200 text-xs uppercase font-bold tracking-wide">Bir Bulut Olsam Etkinlikleri</p>
           </div>
           
           <!-- Bilet Gövde -->
@@ -338,8 +338,8 @@
 
       // Google Apps Script bağlantısı
       if (typeof google === 'undefined') {
-        // Eğer yerel test yapılıyorsa (Mock Data)
-        console.warn("Google Script API bulunamadı, Mock data kullanılıyor.");
+        // Önizleme Modu (Mock Data)
+        console.warn("Google Script API bulunamadı, Mock data (Önizleme) moduna geçiliyor.");
         mockGetActiveEvents(); 
       } else {
         google.script.run
@@ -566,23 +566,21 @@
       
       changeStep(1);
     }
-
+    
     // ----------------------------------------------------------------------
     // MOCK DATA (YALNIZCA TEST İÇİN - GOOGLE SUNUCUSUNDA ÇALIŞMAZ)
     // ----------------------------------------------------------------------
     function mockGetActiveEvents() {
-      console.log("Mock veri yükleniyor...");
       setTimeout(() => {
         renderEvents([
-          { code: 'TEST01', name: 'Tanışma Toplantısı (Test)' },
-          { code: 'TEST02', name: 'Kodlama Atölyesi (Test)' },
-          { code: 'TEST03', name: 'Doğa Yürüyüşü (Test)' }
+          { code: 'TEST01', name: 'Tanışma Toplantısı (Önizleme)' },
+          { code: 'TEST02', name: 'Kodlama Atölyesi (Önizleme)' },
+          { code: 'TEST03', name: 'Doğa Yürüyüşü (Önizleme)' }
         ]);
       }, 1000);
     }
 
     function mockRegister(data, callback) {
-      console.log("Mock kayıt gönderildi:", data);
       setTimeout(() => {
         callback({ success: true, message: 'Mock kayıt başarılı' });
       }, 1500);
