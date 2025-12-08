@@ -338,9 +338,18 @@
 
       // Google Apps Script bağlantısı
       if (typeof google === 'undefined') {
-        // Önizleme Modu (Mock Data)
-        console.warn("Google Script API bulunamadı, Mock data (Önizleme) moduna geçiliyor.");
-        mockGetActiveEvents(); 
+        // HATA: Google Apps Script ortamında değiliz
+        console.error("Google Script API bulunamadı.");
+        loader.classList.add('hidden');
+        
+        // Uyarı Göster
+        Swal.fire({
+          icon: 'error',
+          title: 'Bağlantı Hatası',
+          text: 'Bu uygulama yalnızca Google Apps Script dağıtımı (Deployment) üzerinden çalıştırılabilir.',
+          confirmButtonColor: '#3B82F6'
+        });
+
       } else {
         google.script.run
           .withSuccessHandler(renderEvents)
@@ -492,7 +501,15 @@
       };
 
       if (typeof google === 'undefined') {
-        mockRegister(formData, handleSuccess);
+        Swal.fire({
+          icon: 'error',
+          title: 'Hata',
+          text: 'Google Apps Script bağlantısı kurulamadı. Lütfen uygulamayı dağıtılmış URL üzerinden çalıştırın.',
+          confirmButtonColor: '#3B82F6'
+        });
+        btn.disabled = false;
+        btn.classList.remove('opacity-75', 'cursor-not-allowed');
+        btn.innerHTML = originalContent;
       } else {
         google.script.run
           .withSuccessHandler(handleSuccess)
@@ -565,25 +582,6 @@
       document.getElementById('selectedAvatar').value = '🌥️';
       
       changeStep(1);
-    }
-    
-    // ----------------------------------------------------------------------
-    // MOCK DATA (YALNIZCA TEST İÇİN - GOOGLE SUNUCUSUNDA ÇALIŞMAZ)
-    // ----------------------------------------------------------------------
-    function mockGetActiveEvents() {
-      setTimeout(() => {
-        renderEvents([
-          { code: 'TEST01', name: 'Tanışma Toplantısı (Önizleme)' },
-          { code: 'TEST02', name: 'Kodlama Atölyesi (Önizleme)' },
-          { code: 'TEST03', name: 'Doğa Yürüyüşü (Önizleme)' }
-        ]);
-      }, 1000);
-    }
-
-    function mockRegister(data, callback) {
-      setTimeout(() => {
-        callback({ success: true, message: 'Mock kayıt başarılı' });
-      }, 1500);
     }
   </script>
 </body>
