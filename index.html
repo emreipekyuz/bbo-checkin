@@ -1,621 +1,76 @@
 <!DOCTYPE html>
-<html>
+<html lang="tr">
 <head>
-  <base target="_top">
   <meta charset="UTF-8">
+  <title>Bir Bulut Olsam - Check-in</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Bir Bulut Olsam - Uzay Yolculuğu</title>
   <style>
-    * {
+    html, body {
       margin: 0;
       padding: 0;
-      box-sizing: border-box;
-    }
-
-    body {
-      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-      background: #0a0e27;
-      min-height: 100vh;
-      overflow: hidden;
-      color: white;
-    }
-
-    /* Yıldızlı Arka Plan */
-    .stars {
-      position: fixed;
-      top: 0;
-      left: 0;
-      width: 100%;
       height: 100%;
-      pointer-events: none;
-      z-index: 0;
+      overflow: hidden;
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      background: radial-gradient(circle at top, #e0f2fe 0, #bfdbfe 30%, #60a5fa 60%, #2563eb 100%);
     }
-
-    .star {
-      position: absolute;
-      width: 2px;
-      height: 2px;
-      background: white;
-      border-radius: 50%;
-      animation: twinkle 3s infinite;
-    }
-
-    @keyframes twinkle {
-      0%, 100% { opacity: 0.3; }
-      50% { opacity: 1; }
-    }
-
-    /* Ana Container */
-    .container {
-      position: relative;
-      z-index: 1;
-      max-width: 500px;
-      margin: 0 auto;
-      padding: 20px;
-      min-height: 100vh;
+    .wrapper {
+      height: 100vh;
+      width: 100vw;
       display: flex;
-      flex-direction: column;
+      align-items: center;
       justify-content: center;
     }
-
-    /* Uzay Gemisi - Form Container */
-    .spaceship {
-      background: linear-gradient(135deg, rgba(26, 26, 46, 0.95) 0%, rgba(16, 16, 30, 0.95) 100%);
-      border-radius: 30px;
-      padding: 40px 30px;
-      box-shadow: 0 20px 60px rgba(138, 43, 226, 0.4),
-                  inset 0 1px 0 rgba(255, 255, 255, 0.1);
-      border: 2px solid rgba(138, 43, 226, 0.3);
-      position: relative;
-      overflow: hidden;
-    }
-
-    .spaceship::before {
-      content: '';
-      position: absolute;
-      top: -2px;
-      left: -2px;
-      right: -2px;
-      bottom: -2px;
-      background: linear-gradient(45deg, #8a2be2, #4169e1, #8a2be2);
-      border-radius: 30px;
-      z-index: -1;
-      opacity: 0.3;
-      animation: borderGlow 3s infinite;
-    }
-
-    @keyframes borderGlow {
-      0%, 100% { opacity: 0.3; }
-      50% { opacity: 0.6; }
-    }
-
-    /* Header */
-    .header {
-      text-align: center;
-      margin-bottom: 40px;
-    }
-
-    .header h1 {
-      font-size: 2em;
-      margin-bottom: 10px;
-      background: linear-gradient(135deg, #8a2be2, #4169e1);
-      -webkit-background-clip: text;
-      -webkit-text-fill-color: transparent;
-      background-clip: text;
-      animation: pulse 2s infinite;
-    }
-
-    @keyframes pulse {
-      0%, 100% { opacity: 0.8; transform: scale(1); }
-      50% { opacity: 1; transform: scale(1.02); }
-    }
-
-    .header p {
-      color: #a0a0ff;
-      font-size: 1.1em;
-    }
-
-    /* Gezegen Göstergesi */
-    .planet-indicator {
-      text-align: center;
-      margin-bottom: 30px;
-      padding: 20px;
-      background: rgba(138, 43, 226, 0.1);
-      border-radius: 20px;
-      border: 1px solid rgba(138, 43, 226, 0.3);
-    }
-
-    .planet-display {
-      font-size: 4em;
-      margin-bottom: 10px;
-      animation: float 3s ease-in-out infinite;
-      display: inline-block;
-    }
-
-    @keyframes float {
-      0%, 100% { transform: translateY(0px); }
-      50% { transform: translateY(-10px); }
-    }
-
-    .planet-name {
-      font-size: 1.5em;
-      font-weight: bold;
-      color: #8a2be2;
-      margin-bottom: 5px;
-    }
-
-    .planet-progress {
-      color: #a0a0ff;
-      font-size: 0.9em;
-    }
-
-    /* Yolculuk İlerlemesi */
-    .journey-progress {
-      margin-bottom: 30px;
-      padding: 15px;
-      background: rgba(65, 105, 225, 0.1);
-      border-radius: 15px;
-      border: 1px solid rgba(65, 105, 225, 0.3);
-    }
-
-    .progress-bar {
-      width: 100%;
-      height: 8px;
-      background: rgba(255, 255, 255, 0.1);
-      border-radius: 10px;
-      overflow: hidden;
-      margin-bottom: 10px;
-    }
-
-    .progress-fill {
-      height: 100%;
-      background: linear-gradient(90deg, #8a2be2, #4169e1);
-      border-radius: 10px;
-      transition: width 1s ease;
-      box-shadow: 0 0 10px rgba(138, 43, 226, 0.5);
-    }
-
-    .journey-stats {
-      display: flex;
-      justify-content: space-between;
-      font-size: 0.85em;
-      color: #a0a0ff;
-    }
-
-    /* Form Elements */
-    .form-group {
-      margin-bottom: 25px;
-      position: relative;
-    }
-
-    .form-group label {
-      display: block;
-      margin-bottom: 8px;
-      color: #a0a0ff;
-      font-weight: 600;
-      font-size: 0.95em;
-    }
-
-    .input-wrapper {
-      position: relative;
-    }
-
-    input, select {
-      width: 100%;
-      padding: 15px 20px;
-      background: rgba(255, 255, 255, 0.05);
-      border: 2px solid rgba(138, 43, 226, 0.3);
-      border-radius: 15px;
-      color: white;
-      font-size: 16px;
-      transition: all 0.3s;
-    }
-
-    input:focus, select:focus {
-      outline: none;
-      border-color: #8a2be2;
-      background: rgba(138, 43, 226, 0.1);
-      box-shadow: 0 0 20px rgba(138, 43, 226, 0.3);
-    }
-
-    input::placeholder {
-      color: rgba(255, 255, 255, 0.4);
-    }
-
-    select {
-      cursor: pointer;
-      appearance: none;
-      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%238a2be2' d='M6 9L1 4h10z'/%3E%3C/svg%3E");
-      background-repeat: no-repeat;
-      background-position: right 20px center;
-    }
-
-    select option {
-      background: #1a1a2e;
-      color: white;
-    }
-
-    /* Launch Button */
-    .launch-btn {
-      width: 100%;
-      padding: 18px;
-      background: linear-gradient(135deg, #8a2be2 0%, #4169e1 100%);
-      color: white;
+    .frame {
       border: none;
-      border-radius: 15px;
-      font-size: 1.2em;
-      font-weight: bold;
-      cursor: pointer;
-      transition: all 0.3s;
-      position: relative;
-      overflow: hidden;
-      box-shadow: 0 10px 30px rgba(138, 43, 226, 0.4);
+      width: 100%;
+      height: 100%;
     }
-
-    .launch-btn::before {
-      content: '';
+    .loading {
       position: absolute;
       top: 50%;
       left: 50%;
-      width: 0;
-      height: 0;
-      border-radius: 50%;
-      background: rgba(255, 255, 255, 0.3);
       transform: translate(-50%, -50%);
-      transition: width 0.6s, height 0.6s;
-    }
-
-    .launch-btn:hover::before {
-      width: 300px;
-      height: 300px;
-    }
-
-    .launch-btn:hover {
-      transform: translateY(-3px);
-      box-shadow: 0 15px 40px rgba(138, 43, 226, 0.6);
-    }
-
-    .launch-btn:active {
-      transform: translateY(0);
-    }
-
-    .launch-btn:disabled {
-      opacity: 0.6;
-      cursor: not-allowed;
-      transform: none;
-    }
-
-    .btn-text {
-      position: relative;
-      z-index: 1;
-    }
-
-    /* Mesaj Kutusu */
-    .message {
-      margin-top: 25px;
-      padding: 20px;
-      border-radius: 15px;
-      font-weight: 500;
-      white-space: pre-line;
-      animation: slideIn 0.3s ease;
-      border: 2px solid;
-    }
-
-    @keyframes slideIn {
-      from {
-        opacity: 0;
-        transform: translateY(-10px);
-      }
-      to {
-        opacity: 1;
-        transform: translateY(0);
-      }
-    }
-
-    .message.success {
-      background: rgba(34, 197, 94, 0.1);
-      color: #4ade80;
-      border-color: rgba(34, 197, 94, 0.3);
-    }
-
-    .message.error {
-      background: rgba(239, 68, 68, 0.1);
-      color: #f87171;
-      border-color: rgba(239, 68, 68, 0.3);
-    }
-
-    /* Yükleme Animasyonu */
-    .rocket-loader {
       text-align: center;
-      font-size: 3em;
-      animation: rocketLaunch 1s infinite;
+      color: #1e3a8a;
+      font-weight: 600;
+      font-size: 14px;
     }
-
-    @keyframes rocketLaunch {
-      0%, 100% { transform: translateY(0) rotate(-45deg); }
-      50% { transform: translateY(-20px) rotate(-45deg); }
+    .loading span {
+      display: inline-block;
+      width: 18px;
+      height: 18px;
+      border-radius: 50%;
+      border: 3px solid #fff;
+      border-top-color: #3b82f6;
+      animation: spin 0.8s linear infinite;
+      margin-bottom: 8px;
     }
-
-    .hidden {
-      display: none;
-    }
-
-    /* Gezegen Geçiş Animasyonu */
-    .planet-transition {
-      position: fixed;
-      top: 0;
-      left: 0;
-      width: 100%;
-      height: 100%;
-      background: rgba(0, 0, 0, 0.95);
-      display: flex;
-      flex-direction: column;
-      justify-content: center;
-      align-items: center;
-      z-index: 1000;
-      animation: fadeIn 0.5s ease;
-    }
-
-    .planet-transition .planet-large {
-      font-size: 8em;
-      animation: planetAppear 1.5s ease;
-    }
-
-    @keyframes planetAppear {
-      0% { transform: scale(0) rotate(0deg); opacity: 0; }
-      50% { transform: scale(1.2) rotate(180deg); opacity: 1; }
-      100% { transform: scale(1) rotate(360deg); opacity: 1; }
-    }
-
-    .planet-transition .planet-text {
-      margin-top: 30px;
-      font-size: 2em;
-      font-weight: bold;
-      animation: fadeIn 1s ease 0.5s both;
-    }
-
-    @keyframes fadeIn {
-      from { opacity: 0; }
-      to { opacity: 1; }
-    }
-
-    /* Responsive */
-    @media (max-width: 600px) {
-      .header h1 { font-size: 1.5em; }
-      .planet-display { font-size: 3em; }
-      .spaceship { padding: 30px 20px; }
+    @keyframes spin {
+      to { transform: rotate(360deg); }
     }
   </style>
 </head>
 <body>
-  <!-- Yıldızlı Arka Plan -->
-  <div class="stars" id="stars"></div>
+  <div class="wrapper">
+    <!-- Apps Script WEB APP URL’İNİ BURAYA YAZ -->
+    <iframe
+      id="bbo-frame"
+      class="frame"
+      src="https://script.google.com/macros/s/AKfycbzRudmq44VnhDSiBpm0zdXK7l9hi98EhVFayOamoJyXy169Dh0DKz2ACAey1ikbuJ_O/exec"
+      onload="hideLoader()"
+    ></iframe>
 
-  <!-- Ana Container -->
-  <div class="container">
-    <div class="spaceship">
-      <div class="header">
-        <h1>🚀 BİR BULUT OLSAM</h1>
-        <p>Uzay Yolculuğu Check-in</p>
-      </div>
-
-      <!-- Gezegen Göstergesi -->
-      <div class="planet-indicator" id="planetIndicator">
-        <div class="planet-display" id="currentPlanetEmoji">🌍</div>
-        <div class="planet-name" id="currentPlanetName">Dünya</div>
-        <div class="planet-progress" id="planetProgress">Yolculuğunuzu başlatın!</div>
-      </div>
-
-      <!-- Yolculuk İlerlemesi -->
-      <div class="journey-progress" id="journeyProgress" style="display: none;">
-        <div class="progress-bar">
-          <div class="progress-fill" id="progressFill" style="width: 0%"></div>
-        </div>
-        <div class="journey-stats">
-          <span id="journeyStats">0/11 Gezegen</span>
-          <span id="nextTarget">🎯 Hedef: Ay 🌙</span>
-        </div>
-      </div>
-
-      <!-- Check-in Formu -->
-      <form id="checkinForm">
-        <div class="form-group">
-          <label for="eventSelect">🎪 Etkinlik Seçin</label>
-          <div class="input-wrapper">
-            <select id="eventSelect" required>
-              <option value="">Yükleniyor...</option>
-            </select>
-          </div>
-        </div>
-
-        <div class="form-group">
-          <label for="fullName">👤 Uzay Gezgini Adı</label>
-          <div class="input-wrapper">
-            <input type="text" id="fullName" required placeholder="Adınızı girin">
-          </div>
-        </div>
-
-        <div class="form-group">
-          <label for="phone">📱 İletişim Frekansı</label>
-          <div class="input-wrapper">
-            <input type="tel" id="phone" required placeholder="05XX XXX XX XX">
-          </div>
-        </div>
-
-        <div class="form-group">
-          <label for="email">📧 Uzay Postası</label>
-          <div class="input-wrapper">
-            <input type="email" id="email" placeholder="ornek@galaksi.com">
-          </div>
-        </div>
-
-        <button type="submit" class="launch-btn" id="launchBtn">
-          <span class="btn-text">🚀 YOLCULUĞU BAŞLAT</span>
-        </button>
-      </form>
-
-      <!-- Mesaj Alanı -->
-      <div id="message" class="message hidden"></div>
+    <div id="loader" class="loading">
+      <span></span>
+      <div>Check-in ekranı yükleniyor...</div>
     </div>
   </div>
 
-  <!-- Gezegen Geçiş Animasyonu -->
-  <div id="planetTransition" class="planet-transition hidden">
-    <div class="planet-large" id="transitionPlanet">🌍</div>
-    <div class="planet-text" id="transitionText">Yolculuk başlıyor...</div>
-  </div>
-
   <script>
-    // Yıldızları oluştur
-    function createStars() {
-      const starsContainer = document.getElementById('stars');
-      for (let i = 0; i < 100; i++) {
-        const star = document.createElement('div');
-        star.className = 'star';
-        star.style.left = Math.random() * 100 + '%';
-        star.style.top = Math.random() * 100 + '%';
-        star.style.animationDelay = Math.random() * 3 + 's';
-        starsContainer.appendChild(star);
-      }
+    function hideLoader() {
+      var el = document.getElementById('loader');
+      if (el) el.style.display = 'none';
     }
-
-    // Etkinlikleri yükle
-    function loadEvents() {
-      google.script.run
-        .withSuccessHandler(function(events) {
-          const select = document.getElementById('eventSelect');
-          select.innerHTML = '<option value="">Bir etkinlik seçin</option>';
-          
-          if (events && events.length > 0) {
-            events.forEach(evt => {
-              const option = document.createElement('option');
-              option.value = evt.code;
-              option.textContent = evt.name;
-              select.appendChild(option);
-            });
-          } else {
-            select.innerHTML = '<option value="">Aktif etkinlik yok</option>';
-          }
-        })
-        .withFailureHandler(function(err) {
-          document.getElementById('eventSelect').innerHTML = '<option value="">Yükleme hatası</option>';
-        })
-        .getActiveEvents();
-    }
-
-    // Kullanıcı yolculuğunu kontrol et
-    function checkUserJourney() {
-      const phone = localStorage.getItem('spaceJourneyPhone');
-      if (phone) {
-        google.script.run
-          .withSuccessHandler(function(journey) {
-            if (journey && journey.success) {
-              updatePlanetDisplay(journey);
-            }
-          })
-          .getUserJourney(phone);
-      }
-    }
-
-    // Gezegen göstergesini güncelle
-    function updatePlanetDisplay(journey) {
-      document.getElementById('currentPlanetEmoji').textContent = journey.planetEmoji;
-      document.getElementById('currentPlanetName').textContent = journey.currentPlanet;
-      document.getElementById('planetProgress').textContent = `${journey.totalEvents} etkinlik tamamlandı`;
-      
-      const progress = document.getElementById('journeyProgress');
-      progress.style.display = 'block';
-      
-      const percentage = (journey.totalEvents / 11) * 100;
-      document.getElementById('progressFill').style.width = percentage + '%';
-      document.getElementById('journeyStats').textContent = `${journey.totalEvents}/11 Gezegen`;
-      
-      if (journey.nextPlanet) {
-        document.getElementById('nextTarget').textContent = `🎯 Hedef: ${journey.nextPlanet.name} ${journey.nextPlanet.emoji}`;
-      } else {
-        document.getElementById('nextTarget').textContent = '✨ Tüm gezegenler keşfedildi!';
-      }
-    }
-
-    // Gezegen geçiş animasyonu
-    function showPlanetTransition(planet, message) {
-      const transition = document.getElementById('planetTransition');
-      document.getElementById('transitionPlanet').textContent = planet.emoji;
-      document.getElementById('transitionText').textContent = message;
-      
-      transition.classList.remove('hidden');
-      
-      setTimeout(() => {
-        transition.classList.add('hidden');
-      }, 3000);
-    }
-
-    // Form gönderimi
-    document.getElementById('checkinForm').addEventListener('submit', function(e) {
-      e.preventDefault();
-      
-      const btn = document.getElementById('launchBtn');
-      const btnText = btn.querySelector('.btn-text');
-      const msg = document.getElementById('message');
-      
-      btn.disabled = true;
-      btnText.innerHTML = '<div class="rocket-loader">🚀</div>';
-      msg.classList.add('hidden');
-      
-      const data = {
-        eventCode: document.getElementById('eventSelect').value,
-        fullName: document.getElementById('fullName').value.trim(),
-        phone: document.getElementById('phone').value.trim(),
-        email: document.getElementById('email').value.trim()
-      };
-      
-      // Telefonu kaydet
-      localStorage.setItem('spaceJourneyPhone', data.phone);
-      
-      google.script.run
-        .withSuccessHandler(function(result) {
-          btn.disabled = false;
-          btnText.textContent = '🚀 YOLCULUĞU BAŞLAT';
-          
-          if (result.success && result.journey) {
-            // Gezegen geçiş animasyonu
-            showPlanetTransition(result.journey.currentPlanet, result.journey.currentPlanet.message);
-            
-            // Gezegen göstergesini güncelle
-            setTimeout(() => {
-              updatePlanetDisplay({
-                planetEmoji: result.journey.currentPlanet.emoji,
-                currentPlanet: result.journey.currentPlanet.name,
-                totalEvents: result.journey.totalEvents,
-                nextPlanet: result.journey.nextPlanet
-              });
-            }, 3000);
-          }
-          
-          msg.classList.remove('hidden', 'error');
-          msg.classList.add('success');
-          msg.textContent = result.message || 'Kayıt başarılı!';
-          
-          document.getElementById('checkinForm').reset();
-          loadEvents();
-        })
-        .withFailureHandler(function(err) {
-          btn.disabled = false;
-          btnText.textContent = '🚀 YOLCULUĞU BAŞLAT';
-          
-          msg.classList.remove('hidden', 'success');
-          msg.classList.add('error');
-          msg.textContent = err.message || 'Bir hata oluştu.';
-        })
-        .registerParticipant(data);
-    });
-
-    // Sayfa yüklendiğinde
-    window.onload = function() {
-      createStars();
-      loadEvents();
-      checkUserJourney();
-    };
   </script>
 </body>
 </html>
