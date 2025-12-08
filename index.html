@@ -1,588 +1,272 @@
-<!DOCTYPE html>
-<html lang="tr">
-<head>
-  <meta charset="UTF-8">
-  <title>Bir Bulut Olsam - Etkinlik Kaydı</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <base target="_top">
+/**
+ * BIR BULUT OLSAM DERNEĞİ - ETKİNLİK CHECK-IN SİSTEMİ v3.4
+ * - Belirli bir Google Sheet ID'sine bağlı çalışır
+ * - Events & Checkins sayfaları bu dosyanın içinde olmalı
+ */
+
+const CONFIG = {
+  TIMEZONE: 'Europe/Istanbul',
+
+  // !!! BURASI ÖNEMLİ: SENİN PAYLAŞTIĞIN SHEET IDsİ !!!
+  SPREADSHEET_ID: '1HODERudxpiEXGcpRN53r6AoLIWY5dP_Z4unXfu9N8jw',
   
-  <!-- Font: Quicksand -->
-  <link href="https://fonts.googleapis.com/css2?family=Quicksand:wght@400;600;700&display=swap" rel="stylesheet">
+  // Events sayfasındaki zorunlu başlıklar
+  EVENTS_REQUIRED_COLS: ['EventCode', 'EventName', 'Status'],
+  STATUS_ACTIVE_VALUE: 'Active',
+
+  // Checkins sayfasındaki zorunlu başlıklar
+  CHECKIN_REQUIRED_COLS: ['Timestamp', 'EventCode', 'EventName', 'Phone'],
   
-  <!-- Tailwind CSS (Tasarım Framework) -->
-  <script src="https://cdn.tailwindcss.com"></script>
+  // İsim sütunu olası başlıkları
+  NAME_HEADER_CANDIDATES: [
+    'Name-Surname', // Öncelikli
+    'Name Surname', 'Name', 'Ad Soyad', 'İsim Soyisim'
+  ],
   
-  <!-- SweetAlert2 (Şık Uyarı Pencereleri) -->
-  <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+  // Email sütunu olası başlıkları
+  EMAIL_HEADER_CANDIDATES: [
+    'Email', 'E-mail', 'E-posta'
+  ]
+};
+
+var _CACHE = {
+  ss: null,
+  eventsSheet: null,
+  checkinsSheet: null
+};
+
+/** ==== Spreadsheet Erişimi ==== */
+
+function getSpreadsheet_() {
+  if (_CACHE.ss) return _CACHE.ss;
+  _CACHE.ss = SpreadsheetApp.openById(CONFIG.SPREADSHEET_ID);
+  return _CACHE.ss;
+}
+
+/** ==== Web App Çıkışı ==== */
+function doGet(e) {
+  return HtmlService
+    .createTemplateFromFile('Index') // HTML dosya adı
+    .evaluate()
+    .setTitle('Bir Bulut Olsam - Check-in')
+    .addMetaTag('viewport', 'width=device-width, initial-scale=1')
+    .setXFrameOptionsMode(HtmlService.XFrameOptionsMode.ALLOWALL);
+}
+
+/** ==== Frontend API Fonksiyonları ==== */
+
+function getActiveEvents() {
+  return getActiveEvents_();
+}
+
+function registerParticipant(data) {
+  const lock = LockService.getScriptLock();
+  try {
+    lock.waitLock(10000); 
+  } catch (e) {
+    return { success: false, message: 'Sunucu yoğun, lütfen tekrar deneyin.' };
+  }
+
+  try {
+    const result = recordCheckin_(data || {});
+    return { success: true, message: result.message };
+  } catch (err) {
+    const msg = (err && err.message) ? err.message : 'Bilinmeyen bir hata oluştu.';
+    return { success: false, message: msg };
+  } finally {
+    lock.releaseLock();
+  }
+}
+
+/** ==== Yardımcı Fonksiyonlar ==== */
+
+function getSheetHeaders_(sheet) {
+  const lastCol = Math.max(1, sheet.getLastColumn());
+  const row = sheet.getRange(1, 1, 1, lastCol).getValues()[0];
+  return row.map(v => String(v).trim());
+}
+
+function buildHeaderMap_(headers) {
+  const map = {};
+  headers.forEach((h, i) => {
+    if (h) map[h] = i;
+  });
+  return map;
+}
+
+function findEventsSheet_() {
+  if (_CACHE.eventsSheet) return _CACHE.eventsSheet;
+  const ss = getSpreadsheet_();
+  let sheet = ss.getSheetByName('Events');
   
-  <!-- Canvas Confetti (Konfeti Efekti) -->
-  <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+  if (!sheet) {
+    const need = CONFIG.EVENTS_REQUIRED_COLS;
+    sheet = ss.getSheets().find(sh => {
+      const headers = getSheetHeaders_(sh);
+      return need.every(h => headers.includes(h));
+    });
+  }
+  _CACHE.eventsSheet = sheet || null;
+  return _CACHE.eventsSheet;
+}
+
+function findCheckinsSheet_() {
+  if (_CACHE.checkinsSheet) return _CACHE.checkinsSheet;
+  const ss = getSpreadsheet_();
+  let sheet = ss.getSheetByName('Checkins');
+
+  if (!sheet) {
+    const need = CONFIG.CHECKIN_REQUIRED_COLS;
+    sheet = ss.getSheets().find(sh => {
+      const headers = getSheetHeaders_(sh);
+      return need.every(h => headers.includes(h));
+    });
+  }
+  _CACHE.checkinsSheet = sheet || null;
+  return _CACHE.checkinsSheet;
+}
+
+function detectHeader_(sheet, candidates, defaultVal) {
+  const headers = getSheetHeaders_(sheet);
+  // Tam eşleşme
+  for (let c of candidates) {
+    if (headers.includes(c)) return c;
+  }
+  // Case-insensitive eşleşme
+  const lowerHeaders = headers.map(h => h.toLowerCase());
+  for (let c of candidates) {
+    const idx = lowerHeaders.indexOf(c.toLowerCase());
+    if (idx !== -1) return headers[idx];
+  }
+  return defaultVal;
+}
+
+function normalizePhone_(raw) {
+  const digits = String(raw || '').replace(/\D+/g, '');
+  if (digits.length === 10) return '0' + digits;
+  return digits;
+}
+
+function isValidEmail_(email) {
+  if (!email) return true; // boş ise sorun yapma (HTML required)
+  const s = String(email).trim();
+  return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(s);
+}
+
+/** ==== İş Mantığı ==== */
+
+function getActiveEvents_() {
+  const sh = findEventsSheet_();
+  if (!sh) return []; 
   
-  <!-- QR Code Generator -->
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+  const values = sh.getDataRange().getValues();
+  if (values.length < 2) return [];
 
-  <style>
-    /* --- Temel Ayarlar --- */
-    body {
-      font-family: 'Quicksand', sans-serif;
-      /* Gökyüzü Gradient */
-      background: linear-gradient(180deg, #89f7fe 0%, #66a6ff 100%);
-      min-height: 100vh;
-      overflow: hidden; /* Sayfa kaymasını engelle (Mobil hissi için) */
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      -webkit-tap-highlight-color: transparent; /* Mobilde tıklama gölgesini kaldır */
-    }
+  const headers = values[0].map(v => String(v).trim());
+  const map = buildHeaderMap_(headers);
 
-    /* --- Hareketli Bulut Animasyonları --- */
-    .cloud {
-      position: absolute;
-      background: rgba(255, 255, 255, 0.6);
-      border-radius: 50%;
-      animation: floatCloud 25s linear infinite;
-      z-index: 0;
-      pointer-events: none; /* Tıklamayı engelle */
-    }
-    .cloud::after, .cloud::before {
-      content: '';
-      position: absolute;
-      background: inherit;
-      border-radius: 50%;
-    }
-    
-    /* Bulut 1 */
-    .c1 { width: 100px; height: 40px; top: 10%; left: -20%; animation-duration: 28s; }
-    .c1::after { width: 40px; height: 40px; top: -20px; left: 15px; }
-    .c1::before { width: 50px; height: 50px; top: -30px; left: 40px; }
+  const iCode = map['EventCode'];
+  const iName = map['EventName'];
+  const iStat = map['Status'];
 
-    /* Bulut 2 */
-    .c2 { width: 140px; height: 60px; top: 40%; left: -30%; animation-duration: 35s; opacity: 0.4; }
-    .c2::after { width: 60px; height: 60px; top: -30px; left: 25px; }
-    .c2::before { width: 70px; height: 70px; top: -45px; left: 60px; }
-    
-    /* Bulut 3 */
-    .c3 { width: 80px; height: 30px; top: 75%; left: -15%; animation-duration: 20s; opacity: 0.7; }
-    .c3::after { width: 30px; height: 30px; top: -15px; left: 10px; }
+  if (iCode === undefined || iName === undefined || iStat === undefined) {
+    return [];
+  }
 
-    @keyframes floatCloud {
-      0% { transform: translateX(-150px); }
-      100% { transform: translateX(120vw); }
-    }
+  const out = [];
+  const targetStatus = CONFIG.STATUS_ACTIVE_VALUE.toUpperCase();
 
-    /* --- Glassmorphism Kart Tasarımı --- */
-    .glass-card {
-      background: rgba(255, 255, 255, 0.90);
-      backdrop-filter: blur(16px);
-      -webkit-backdrop-filter: blur(16px);
-      border: 1px solid rgba(255, 255, 255, 0.8);
-      box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.15);
-      z-index: 10;
-      transition: all 0.3s ease;
-    }
-
-    /* --- Avatar Seçimi --- */
-    .avatar-option {
-      transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
-      cursor: pointer;
-      opacity: 0.5;
-      filter: grayscale(100%);
-      transform: scale(0.9);
-    }
-    .avatar-option:hover { opacity: 0.8; }
-    .avatar-option.selected {
-      transform: scale(1.15);
-      opacity: 1;
-      filter: grayscale(0%);
-      background: #EFF6FF; /* blue-50 */
-      border-radius: 50%;
-      box-shadow: 0 0 0 3px #60A5FA; /* blue-400 */
-    }
-
-    /* --- Animasyonlar --- */
-    .slide-in { animation: slideIn 0.4s ease-out forwards; }
-    .fade-out { animation: fadeOut 0.3s ease-in forwards; }
-
-    @keyframes slideIn {
-      from { opacity: 0; transform: translateY(15px); }
-      to { opacity: 1; transform: translateY(0); }
-    }
-    @keyframes fadeOut {
-      from { opacity: 1; }
-      to { opacity: 0; }
-    }
-
-    /* --- Yükleniyor Spinner --- */
-    .loader {
-      width: 40px;
-      height: 40px;
-      border: 4px solid #FFF;
-      border-bottom-color: #3B82F6;
-      border-radius: 50%;
-      display: inline-block;
-      box-sizing: border-box;
-      animation: rotation 0.8s linear infinite;
-    }
-    @keyframes rotation { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
-
-    /* --- Input Odaklanma --- */
-    .input-field:focus {
-      outline: none;
-      border-color: #60A5FA;
-      box-shadow: 0 0 0 4px rgba(96, 165, 250, 0.2);
-    }
-  </style>
-</head>
-<body class="antialiased text-gray-800">
-
-  <!-- Arkaplan Dekorasyon -->
-  <div class="cloud c1"></div>
-  <div class="cloud c2"></div>
-  <div class="cloud c3"></div>
-
-  <!-- Ana Kapsayıcı -->
-  <div class="w-full max-w-md p-4 relative">
-    
-    <div id="mainCard" class="glass-card w-full rounded-3xl p-6 sm:p-8 relative overflow-hidden">
-      
-      <!-- Logo ve Başlık -->
-      <div class="flex flex-col items-center mb-6 select-none">
-        <div class="w-14 h-14 bg-white rounded-full flex items-center justify-center shadow-md text-3xl mb-3 animate-bounce">
-          ☁️
-        </div>
-        <h1 class="text-xl font-bold text-blue-900 tracking-wide text-center uppercase">BİR BULUT OLSAM</h1>
-        <p class="text-xs text-blue-500 font-bold uppercase tracking-widest text-center mt-1">Etkinlik Kayıt Sistemi</p>
-      </div>
-
-      <!-- ========================================== -->
-      <!-- BÖLÜM 1: Etkinlik Seçimi (Rota) -->
-      <!-- ========================================== -->
-      <div id="step1" class="slide-in">
-        <h2 class="text-center text-lg text-gray-700 font-bold mb-5">Hangi Etkinliğe Geldin?</h2>
-        
-        <!-- Yükleniyor... -->
-        <div id="loadingEvents" class="flex flex-col items-center justify-center py-10">
-          <span class="loader border-blue-200 border-b-blue-600 mb-3"></span>
-          <span class="text-sm font-semibold text-blue-400">Rotalar taranıyor...</span>
-        </div>
-
-        <!-- Etkinlik Listesi -->
-        <div id="eventList" class="space-y-3 hidden overflow-y-auto max-h-[300px] pr-1">
-          <!-- Dinamik İçerik Buraya Gelecek -->
-        </div>
-
-        <!-- Hata Durumu (Retry Button) -->
-        <div id="errorState" class="hidden text-center py-4">
-          <p class="text-red-500 text-sm mb-2">Etkinlikler yüklenemedi.</p>
-          <button onclick="loadEvents()" class="text-xs bg-gray-100 hover:bg-gray-200 px-3 py-2 rounded-lg">Tekrar Dene</button>
-        </div>
-      </div>
-
-      <!-- ========================================== -->
-      <!-- BÖLÜM 2: Kullanıcı Formu (Giriş) -->
-      <!-- ========================================== -->
-      <div id="step2" class="hidden">
-        <div class="flex items-center mb-2">
-          <button type="button" onclick="changeStep(1)" class="text-gray-400 hover:text-blue-500 text-sm flex items-center gap-1 transition-colors px-2 py-1 -ml-2 rounded-md hover:bg-blue-50">
-            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
-            </svg>
-            Geri
-          </button>
-        </div>
-
-        <h2 class="text-center text-xl text-gray-800 font-bold mb-1">Aramıza Hoşgeldin!</h2>
-        <p class="text-center text-xs text-gray-500 mb-6 font-medium">Biniş kartın için bilgilerini tamamla</p>
-
-        <!-- Avatar Seçici -->
-        <div class="flex justify-center gap-4 mb-6 select-none">
-          <div class="avatar-option p-2 text-2xl" onclick="selectAvatar('🚀')" id="av1">🚀</div>
-          <div class="avatar-option p-2 text-2xl selected" onclick="selectAvatar('🌥️')" id="av2">🌥️</div>
-          <div class="avatar-option p-2 text-2xl" onclick="selectAvatar('🌟')" id="av3">🌟</div>
-          <div class="avatar-option p-2 text-2xl" onclick="selectAvatar('🎈')" id="av4">🎈</div>
-        </div>
-
-        <form id="checkinForm" onsubmit="handleSubmit(event)" class="space-y-4">
-          <!-- Gizli Veriler -->
-          <input type="hidden" id="selectedEventCode">
-          <input type="hidden" id="selectedEventName">
-          <input type="hidden" id="selectedAvatar" value="🌥️">
-
-          <!-- İsim -->
-          <div class="relative group">
-            <span class="absolute left-4 top-3.5 text-gray-400 group-focus-within:text-blue-500 transition-colors">👤</span>
-            <input type="text" id="fullName" required placeholder="Adın Soyadın" autocomplete="name"
-              class="input-field w-full bg-blue-50/50 border border-blue-100 rounded-xl py-3 pl-12 pr-4 text-gray-700 font-semibold placeholder-gray-400 transition-all">
-          </div>
-
-          <!-- Telefon -->
-          <div class="relative group">
-            <span class="absolute left-4 top-3.5 text-gray-400 group-focus-within:text-blue-500 transition-colors">📱</span>
-            <input type="tel" id="phone" required placeholder="Telefon Numaran (5XX...)" autocomplete="tel"
-              class="input-field w-full bg-blue-50/50 border border-blue-100 rounded-xl py-3 pl-12 pr-4 text-gray-700 font-semibold placeholder-gray-400 transition-all">
-          </div>
-
-          <!-- Email -->
-          <div class="relative group">
-            <span class="absolute left-4 top-3.5 text-gray-400 group-focus-within:text-blue-500 transition-colors">📧</span>
-            <input type="email" id="email" required placeholder="E-Posta Adresin" autocomplete="email"
-              class="input-field w-full bg-blue-50/50 border border-blue-100 rounded-xl py-3 pl-12 pr-4 text-gray-700 font-semibold placeholder-gray-400 transition-all">
-          </div>
-
-          <!-- Submit Butonu -->
-          <button type="submit" id="submitBtn" class="w-full bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white font-bold py-4 rounded-xl shadow-lg shadow-blue-200 transform transition active:scale-[0.98] flex items-center justify-center gap-2 mt-4">
-            <span>Kaydı Gönder</span>
-            <span class="text-lg">✈️</span>
-          </button>
-        </form>
-      </div>
-
-      <!-- ========================================== -->
-      <!-- BÖLÜM 3: Bilet (Sonuç) -->
-      <!-- ========================================== -->
-      <div id="step3" class="hidden text-center">
-        
-        <!-- Bilet Kartı -->
-        <div class="bg-white rounded-xl shadow-xl overflow-hidden border border-gray-100 transform transition hover:scale-[1.02] duration-300">
-          
-          <!-- Bilet Başlık (Mavi Alan) -->
-          <div class="bg-blue-600 p-4 text-white relative overflow-hidden">
-            <div class="absolute -right-6 -top-6 text-7xl opacity-10">☁️</div>
-            <h3 class="font-bold text-lg tracking-widest uppercase">BİNİŞ KARTI</h3>
-            <p class="text-blue-200 text-xs uppercase font-bold tracking-wide">Bir Bulut Olsam Etkinlikleri</p>
-          </div>
-          
-          <!-- Bilet Gövde -->
-          <div class="p-6 flex flex-col gap-4 relative bg-white">
-            <!-- Sol ve Sağ Yırtık Efekti -->
-            <div class="absolute -left-3 top-[55%] w-6 h-6 bg-[#f0f7ff] rounded-full shadow-inner"></div>
-            <div class="absolute -right-3 top-[55%] w-6 h-6 bg-[#f0f7ff] rounded-full shadow-inner"></div>
-
-            <!-- Yolcu Adı -->
-            <div class="text-left border-b border-gray-100 pb-2">
-              <p class="text-[10px] text-gray-400 uppercase font-bold tracking-wider">YOLCU</p>
-              <p id="ticketName" class="font-bold text-gray-800 text-lg truncate">---</p>
-            </div>
-            
-            <!-- Etkinlik Detayı -->
-            <div class="flex justify-between items-end">
-              <div class="text-left w-2/3">
-                <p class="text-[10px] text-gray-400 uppercase font-bold tracking-wider">VARIŞ NOKTASI</p>
-                <p id="ticketEvent" class="font-bold text-blue-600 text-sm leading-tight mt-1">---</p>
-              </div>
-              <div class="text-right">
-                <p class="text-[10px] text-gray-400 uppercase font-bold tracking-wider">KAPI</p>
-                <p class="font-bold text-gray-800 text-2xl">01</p>
-              </div>
-            </div>
-
-            <!-- QR Kod -->
-            <div class="flex justify-center mt-3 bg-gray-50 p-3 rounded-lg border border-gray-100">
-              <div id="qrcode" class="mix-blend-multiply opacity-90"></div>
-            </div>
-            
-            <!-- Mesaj -->
-            <div class="mt-2 pt-2">
-              <p class="text-[10px] text-gray-400 uppercase font-bold tracking-wider mb-1">GÜNÜN BULUT MESAJI</p>
-              <p id="cloudMessage" class="text-sm font-medium text-blue-500 italic">
-                "..."
-              </p>
-            </div>
-
-          </div>
-        </div>
-        
-        <!-- Yeni Kayıt Linki -->
-        <button onclick="resetApp()" class="mt-8 text-blue-500 font-bold hover:text-blue-700 text-sm transition-colors flex items-center justify-center gap-1 mx-auto">
-          <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
-          </svg>
-          Yeni Bir Yolcu Kaydet
-        </button>
-      </div>
-
-    </div>
-  </div>
-
-  <script>
-    // ----------------------------------------------------------------------
-    // GLOBAL DEĞİŞKENLER VE AYARLAR
-    // ----------------------------------------------------------------------
-    const cloudMessages = [
-      "Bugün gökyüzü senin için parlıyor! ☀️",
-      "Bir iyilik bin bulut getirir. ☁️",
-      "Gülümsemen en güzel güneş ışığıdır.",
-      "Bugün harika şeyler olacak, hisset!",
-      "Sen bir bulut kadar özgürsün.",
-      "İyilik paylaştıkça çoğalan tek şeydir.",
-      "Gökyüzüne bakmayı unutma!",
-      "Hafif ol, bulut gibi süzül."
-    ];
-
-    // ----------------------------------------------------------------------
-    // BAŞLANGIÇ (INIT)
-    // ----------------------------------------------------------------------
-    window.onload = function() {
-      // Sayfa yüklenince etkinlikleri çek
-      loadEvents();
-    };
-
-    function loadEvents() {
-      const loader = document.getElementById('loadingEvents');
-      const list = document.getElementById('eventList');
-      const errorDiv = document.getElementById('errorState');
-
-      loader.classList.remove('hidden');
-      list.classList.add('hidden');
-      errorDiv.classList.add('hidden');
-
-      // Google Apps Script bağlantısı
-      if (typeof google === 'undefined') {
-        // HATA: Google Apps Script ortamında değiliz
-        console.error("Google Script API bulunamadı.");
-        loader.classList.add('hidden');
-        
-        // Uyarı Göster
-        Swal.fire({
-          icon: 'error',
-          title: 'Bağlantı Hatası',
-          text: 'Bu uygulama yalnızca Google Apps Script dağıtımı (Deployment) üzerinden çalıştırılabilir.',
-          confirmButtonColor: '#3B82F6'
-        });
-
-      } else {
-        google.script.run
-          .withSuccessHandler(renderEvents)
-          .withFailureHandler((err) => {
-            console.error(err);
-            loader.classList.add('hidden');
-            errorDiv.classList.remove('hidden');
-            Swal.fire({
-              icon: 'error',
-              title: 'Hata',
-              text: 'Sunucu ile bağlantı kurulamadı. İnternet bağlantınızı kontrol edin.',
-              confirmButtonColor: '#3B82F6'
-            });
-          })
-          .getActiveEvents();
-      }
-    }
-
-    // ----------------------------------------------------------------------
-    // DOM İŞLEMLERİ
-    // ----------------------------------------------------------------------
-
-    function renderEvents(events) {
-      const list = document.getElementById('eventList');
-      const loader = document.getElementById('loadingEvents');
-      
-      loader.classList.add('hidden');
-      list.classList.remove('hidden');
-      list.innerHTML = '';
-
-      if (!events || events.length === 0) {
-        list.innerHTML = `
-          <div class="text-center py-6 px-4 bg-gray-50 rounded-xl border border-dashed border-gray-300">
-            <p class="text-gray-500 font-medium">Şu an aktif bir uçuş rotası (etkinlik) bulunmuyor.</p>
-            <p class="text-xs text-gray-400 mt-1">Lütfen daha sonra tekrar kontrol edin.</p>
-          </div>
-        `;
-        return;
-      }
-
-      events.forEach(evt => {
-        const btn = document.createElement('div');
-        // Erişilebilirlik ve Stil
-        btn.className = 'bg-white hover:bg-blue-50 border border-gray-100 hover:border-blue-300 rounded-xl p-4 cursor-pointer transition-all duration-200 flex items-center justify-between group shadow-sm hover:shadow-md mb-3 select-none';
-        btn.onclick = () => selectEvent(evt);
-        
-        btn.innerHTML = `
-          <div class="flex items-center gap-4">
-            <div class="bg-blue-100 text-blue-500 rounded-lg p-3 group-hover:bg-blue-500 group-hover:text-white transition-colors duration-300">
-              <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
-              </svg>
-            </div>
-            <div>
-              <p class="font-bold text-gray-700 text-sm sm:text-base group-hover:text-blue-700 leading-tight">${evt.name}</p>
-              <p class="text-[10px] sm:text-xs text-gray-400 font-mono mt-1">UÇUŞ KODU: ${evt.code}</p>
-            </div>
-          </div>
-          <div class="text-gray-300 group-hover:text-blue-500 transition-colors transform group-hover:translate-x-1 duration-200">
-            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-              <path fill-rule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clip-rule="evenodd" />
-            </svg>
-          </div>
-        `;
-        list.appendChild(btn);
+  for (let r = 1; r < values.length; r++) {
+    const row = values[r];
+    const status = String(row[iStat] || '').trim().toUpperCase();
+    if (status === targetStatus) {
+      out.push({
+        code: String(row[iCode] || '').trim(),
+        name: String(row[iName] || '').trim()
       });
     }
+  }
+  return out;
+}
 
-    function changeStep(stepNumber) {
-      // Tüm adımları gizle
-      ['step1', 'step2', 'step3'].forEach(id => {
-        document.getElementById(id).classList.add('hidden');
-        document.getElementById(id).classList.remove('slide-in');
-      });
-      
-      // Hedef adımı göster
-      const target = document.getElementById('step' + stepNumber);
-      target.classList.remove('hidden');
-      target.classList.add('slide-in');
+function getEventNameByCode_(eventCode) {
+  const sh = findEventsSheet_();
+  if (!sh) return null;
+  const values = sh.getDataRange().getValues();
+  
+  const headers = values[0].map(v => String(v).trim());
+  const map = buildHeaderMap_(headers);
+  const iCode = map['EventCode'];
+  const iName = map['EventName'];
+  const iStat = map['Status'];
+
+  if (iCode === undefined || iName === undefined || iStat === undefined) {
+    return null;
+  }
+
+  const wanted = String(eventCode || '').trim();
+  const targetStatus = CONFIG.STATUS_ACTIVE_VALUE.toUpperCase();
+
+  for (let r = 1; r < values.length; r++) {
+    const row = values[r];
+    const code = String(row[iCode] || '').trim();
+    const status = String(row[iStat] || '').trim().toUpperCase();
+    
+    if (code === wanted && status === targetStatus) {
+      return String(row[iName] || '').trim();
     }
+  }
+  return null;
+}
 
-    function selectEvent(evt) {
-      document.getElementById('selectedEventCode').value = evt.code;
-      document.getElementById('selectedEventName').value = evt.name;
-      changeStep(2);
-      // Mobilde klavye açılmasın diye inputlara focus yapmıyoruz
-    }
+function recordCheckin_(data) {
+  const sh = findCheckinsSheet_();
+  if (!sh) {
+    throw new Error('Checkins sayfası bulunamadı.');
+  }
 
-    function selectAvatar(emoji) {
-      document.querySelectorAll('.avatar-option').forEach(el => el.classList.remove('selected'));
-      event.currentTarget.classList.add('selected');
-      document.getElementById('selectedAvatar').value = emoji;
-    }
+  const headers = getSheetHeaders_(sh);
+  const map = buildHeaderMap_(headers);
 
-    function handleSubmit(e) {
-      e.preventDefault();
-      
-      const btn = document.getElementById('submitBtn');
-      const originalContent = btn.innerHTML;
-      
-      // Buton Yükleniyor Hali
-      btn.disabled = true;
-      btn.classList.add('opacity-75', 'cursor-not-allowed');
-      btn.innerHTML = `
-        <span class="loader w-5 h-5 border-2 mr-2" style="width:20px; height:20px;"></span> 
-        <span>Kontrol Ediliyor...</span>
-      `;
+  const nameHeader = detectHeader_(sh, CONFIG.NAME_HEADER_CANDIDATES, 'Name-Surname');
+  const emailHeader = detectHeader_(sh, CONFIG.EMAIL_HEADER_CANDIDATES, 'Email');
 
-      // Form Verisi
-      const formData = {
-        eventCode: document.getElementById('selectedEventCode').value,
-        eventName: document.getElementById('selectedEventName').value,
-        fullName: document.getElementById('fullName').value.trim(),
-        phone: document.getElementById('phone').value.trim(),
-        email: document.getElementById('email').value.trim()
-      };
-      
-      const avatar = document.getElementById('selectedAvatar').value;
+  const iTimestamp = map['Timestamp'];
+  const iEventCode = map['EventCode'];
+  const iEventName = map['EventName'];
+  const iPhone = map['Phone'];
+  const iName = map[nameHeader];
+  const iEmail = map[emailHeader];
 
-      // Backend Çağrısı
-      const handleSuccess = (response) => {
-        btn.disabled = false;
-        btn.classList.remove('opacity-75', 'cursor-not-allowed');
-        btn.innerHTML = originalContent;
-        
-        if (response && response.success) {
-          showTicket(formData.fullName, formData.eventName, avatar);
-        } else {
-          Swal.fire({
-            icon: 'warning',
-            title: 'Dikkat',
-            text: response ? response.message : 'Bir hata oluştu.',
-            confirmButtonColor: '#3B82F6'
-          });
-        }
-      };
+  const eventCode = String(data.eventCode || '').trim();
+  const phone = normalizePhone_(data.phone);
+  const name = String(data.fullName || '').trim();
+  const email = data.email ? String(data.email).trim() : '';
 
-      const handleFailure = (err) => {
-        btn.disabled = false;
-        btn.classList.remove('opacity-75', 'cursor-not-allowed');
-        btn.innerHTML = originalContent;
-        Swal.fire({
-            icon: 'error',
-            title: 'Hata',
-            text: err.message,
-            confirmButtonColor: '#3B82F6'
-        });
-      };
+  if (!eventCode) throw new Error('Etkinlik seçimi yapılamadı.');
+  if (!phone) throw new Error('Telefon numarası eksik.');
+  if (!name) throw new Error('İsim eksik.');
+  if (!isValidEmail_(email)) throw new Error('Lütfen geçerli bir e-posta adresi girin.');
 
-      if (typeof google === 'undefined') {
-        Swal.fire({
-          icon: 'error',
-          title: 'Hata',
-          text: 'Google Apps Script bağlantısı kurulamadı. Lütfen uygulamayı dağıtılmış URL üzerinden çalıştırın.',
-          confirmButtonColor: '#3B82F6'
-        });
-        btn.disabled = false;
-        btn.classList.remove('opacity-75', 'cursor-not-allowed');
-        btn.innerHTML = originalContent;
-      } else {
-        google.script.run
-          .withSuccessHandler(handleSuccess)
-          .withFailureHandler(handleFailure)
-          .registerParticipant(formData);
-      }
-    }
+  const eventName = getEventNameByCode_(eventCode);
+  if (!eventName) {
+    throw new Error('Seçilen etkinlik (' + eventCode + ') şu an aktif değil.');
+  }
 
-    function showTicket(name, eventName, avatar) {
-      changeStep(3);
-      
-      // Bilet Metinleri
-      document.getElementById('ticketName').innerText = avatar + ' ' + name;
-      document.getElementById('ticketEvent').innerText = eventName;
-      
-      // Rastgele Mesaj
-      const randomMsg = cloudMessages[Math.floor(Math.random() * cloudMessages.length)];
-      document.getElementById('cloudMessage').innerText = `"${randomMsg}"`;
+  const newRow = new Array(headers.length).fill('');
+  const now = new Date();
 
-      // QR Kod Temizle ve Oluştur
-      const qrContainer = document.getElementById("qrcode");
-      qrContainer.innerHTML = "";
-      
-      // Türkçe karakter sorununu önlemek için encodeURIComponent kullanabiliriz veya basitçe string birleştiririz.
-      // QRCode.js genelde UTF-8 destekler ama garanti olsun.
-      new QRCode(qrContainer, {
-        text: JSON.stringify({ name: name, event: eventName, date: new Date().toISOString() }),
-        width: 80,
-        height: 80,
-        colorDark : "#2563EB",
-        colorLight : "#ffffff",
-        correctLevel : QRCode.CorrectLevel.L
-      });
+  if (iTimestamp !== undefined) newRow[iTimestamp] = now;
+  if (iEventCode !== undefined) newRow[iEventCode] = eventCode;
+  if (iEventName !== undefined) newRow[iEventName] = eventName;
+  if (iPhone !== undefined) newRow[iPhone] = phone;
+  if (iName !== undefined) newRow[iName] = name;
+  if (iEmail !== undefined) newRow[iEmail] = email;
 
-      // --- KONFETİ EFEKTİ (5 SANİYE) ---
-      const duration = 5000;
-      const end = Date.now() + duration;
-      const colors = ['#60A5FA', '#93C5FD', '#FFFFFF', '#FCD34D'];
+  sh.appendRow(newRow);
 
-      (function frame() {
-        confetti({
-          particleCount: 5,
-          angle: 60,
-          spread: 55,
-          origin: { x: 0 },
-          colors: colors,
-          zIndex: 9999
-        });
-        confetti({
-          particleCount: 5,
-          angle: 120,
-          spread: 55,
-          origin: { x: 1 },
-          colors: colors,
-          zIndex: 9999
-        });
-
-        if (Date.now() < end) {
-          requestAnimationFrame(frame);
-        }
-      }());
-    }
-
-    function resetApp() {
-      document.getElementById('checkinForm').reset();
-      
-      // Varsayılan avatarı seç (Bulut)
-      document.querySelectorAll('.avatar-option').forEach(el => el.classList.remove('selected'));
-      document.getElementById('av2').classList.add('selected');
-      document.getElementById('selectedAvatar').value = '🌥️';
-      
-      changeStep(1);
-    }
-  </script>
-</body>
-</html>
+  return {
+    ok: true,
+    message: 'Kayıt başarılı! İyi eğlenceler. ☁️'
+  };
+}
