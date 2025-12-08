@@ -132,6 +132,147 @@
     
     .theme-toggle:active { transform:scale(0.95); }
     
+    /* HERO / GAME HUD */
+    .hero-card {
+      background:linear-gradient(135deg, rgba(91,141,239,0.12), rgba(142,225,247,0.18));
+      border-radius:var(--radius);
+      padding:24px 20px;
+      margin:16px;
+      box-shadow:var(--shadow);
+      border:1px solid rgba(91,141,239,0.25);
+      position:relative;
+      overflow:hidden;
+    }
+
+    .hero-card:after {
+      content:"";
+      position:absolute;
+      width:180px;
+      height:180px;
+      background:radial-gradient(circle at center, rgba(255,255,255,0.6), transparent 70%);
+      right:-60px;
+      top:-70px;
+      filter:blur(2px);
+      opacity:0.7;
+    }
+
+    .hero-pill {
+      display:inline-flex;
+      align-items:center;
+      gap:8px;
+      background:rgba(255,255,255,0.7);
+      color:#1e3a8a;
+      padding:6px 12px;
+      border-radius:999px;
+      font-weight:700;
+      font-size:0.8rem;
+      box-shadow:0 6px 20px rgba(91,141,239,0.2);
+    }
+
+    .hero-card h2 {
+      margin:12px 0 8px;
+      font-size:clamp(1.2rem, 4vw, 1.6rem);
+    }
+
+    .hero-card p {
+      color:var(--muted);
+      line-height:1.5;
+      max-width:700px;
+    }
+
+    .hero-actions {
+      display:flex;
+      flex-wrap:wrap;
+      gap:10px;
+      margin-top:14px;
+    }
+
+    .stat-chip {
+      background:rgba(255,255,255,0.8);
+      border:1px solid rgba(0,0,0,0.05);
+      border-radius:12px;
+      padding:10px 12px;
+      font-weight:700;
+      color:#0f172a;
+      display:inline-flex;
+      align-items:center;
+      gap:8px;
+      box-shadow:0 8px 18px rgba(91,141,239,0.25);
+    }
+
+    .hud-grid {
+      display:grid;
+      grid-template-columns:repeat(auto-fit, minmax(240px, 1fr));
+      gap:12px;
+      margin:16px;
+    }
+
+    .hud-card {
+      background:var(--card);
+      border-radius:var(--radius);
+      padding:18px;
+      border:1px solid rgba(0,0,0,0.06);
+      box-shadow:var(--shadow);
+      position:relative;
+      overflow:hidden;
+    }
+
+    .hud-title {
+      font-weight:800;
+      font-size:1rem;
+      margin-bottom:6px;
+    }
+
+    .hud-sub {
+      color:var(--muted);
+      font-size:0.9rem;
+    }
+
+    .xp-bar {
+      background:rgba(91,141,239,0.12);
+      border-radius:999px;
+      height:12px;
+      margin:10px 0;
+      overflow:hidden;
+      position:relative;
+    }
+
+    .xp-fill {
+      background:linear-gradient(90deg, var(--primary), var(--accent));
+      height:100%;
+      width:0%;
+      transition:width 0.5s ease;
+    }
+
+    .xp-meta { display:flex; justify-content:space-between; font-size:0.85rem; color:var(--muted); }
+    .xp-level { font-size:0.9rem; font-weight:700; color:var(--primary); }
+
+    .streak-number {
+      font-size:clamp(1.8rem, 6vw, 2.1rem);
+      font-weight:800;
+      color:var(--primary-700);
+      margin:6px 0;
+    }
+
+    .quest-card ul { list-style:none; padding:0; margin:8px 0 0; display:grid; gap:8px; }
+    .quest-card li { display:flex; align-items:center; justify-content:space-between; background:rgba(91,141,239,0.05); padding:10px 12px; border-radius:12px; }
+    .quest-icon { margin-right:10px; }
+    .quest-status { font-weight:700; font-size:0.85rem; color:var(--muted); }
+    .quest-done { color:var(--ok); }
+    .quest-reward { margin-top:10px; font-size:0.85rem; color:var(--primary-700); font-weight:700; }
+
+    .heart-card { text-align:center; }
+    .heart-wrap { position:relative; width:160px; margin:0 auto; }
+    .heart-svg { width:160px; height:160px; }
+    .heart-label { margin-top:6px; font-weight:600; }
+    .heart-percent { font-size:1.2rem; font-weight:800; margin-top:4px; }
+    .sparkle { position:absolute; animation:floatUp 2s ease forwards; font-size:1.1rem; }
+
+    @keyframes floatUp {
+      from { opacity:0; transform:translateY(8px) scale(0.95); }
+      to { opacity:1; transform:translateY(-12px) scale(1.05); }
+    }
+
     /* CONSTELLATION MAP */
     .constellation-container {
       background:linear-gradient(180deg, #0f172a 0%, #1e293b 100%);
@@ -218,55 +359,6 @@
     
     .star-tooltip.show { opacity:1; }
     
-    /* Participants List */
-    .participants-list {
-      background:rgba(255,255,255,0.05);
-      border-radius:12px;
-      padding:12px;
-      margin-bottom:16px;
-      max-height:160px;
-      overflow-y:auto;
-      position:relative;
-      z-index:2;
-    }
-    
-    .participants-list::-webkit-scrollbar {
-      width:4px;
-    }
-    
-    .participants-list::-webkit-scrollbar-track {
-      background:rgba(255,255,255,0.1);
-      border-radius:2px;
-    }
-    
-    .participants-list::-webkit-scrollbar-thumb {
-      background:rgba(255,255,255,0.3);
-      border-radius:2px;
-    }
-    
-    .participants-grid {
-      display:flex;
-      flex-wrap:wrap;
-      gap:8px;
-    }
-    
-    .participant-item {
-      font-size:0.8rem;
-      color:#fff;
-      padding:4px 10px;
-      background:rgba(255,255,255,0.1);
-      border-radius:16px;
-      border:1px solid rgba(255,255,255,0.2);
-      white-space:nowrap;
-    }
-    
-    .participants-empty {
-      text-align:center;
-      color:rgba(255,255,255,0.5);
-      font-size:0.85rem;
-      padding:16px;
-      font-style:italic;
-    }
     
     /* MOOD SELECTOR */
     .mood-container {
@@ -695,16 +787,75 @@
   </nav>
 
   <div class="wrap">
+    <section class="hero-card">
+      <div class="hero-pill">Yeni! Oyunlaştırılmış check-in ✨</div>
+      <h2>Bulut Macerasına Hoş Geldin</h2>
+      <p>Her check-in yeni bir yıldız yakar, XP kazandırır ve serini yükseltir. Ruh halini seç, görevleri tamamla ve gökyüzündeki yerini parlat.</p>
+      <div class="hero-actions">
+        <span class="stat-chip" id="heroMood">Mood kilidi: Açılmadı</span>
+        <span class="stat-chip" id="heroQuest">Günlük görev: 0/3</span>
+        <span class="stat-chip" id="heroStreak">Günlük seri: 0</span>
+      </div>
+    </section>
+
+    <div class="hud-grid">
+      <div class="hud-card">
+        <div class="hud-title">XP Sayaç</div>
+        <div class="hud-sub">Check-in yaptıkça seviye atla.</div>
+        <div class="xp-level">Seviye <span id="xpLevel">1</span></div>
+        <div class="xp-bar"><div class="xp-fill" id="xpFill"></div></div>
+        <div class="xp-meta">
+          <span id="xpValue">0 XP</span>
+          <span id="xpHint">100 XP'de seviye atla</span>
+        </div>
+      </div>
+
+      <div class="hud-card">
+        <div class="hud-title">Günlük Seri</div>
+        <div class="hud-sub">Her gün check-in yap, seriyi bozma.</div>
+        <div class="streak-number" id="streakValue">0</div>
+        <div class="hud-sub" id="streakLabel">Arka arkaya gün yok</div>
+      </div>
+
+      <div class="hud-card quest-card">
+        <div class="hud-title">Görev Panosu</div>
+        <div class="hud-sub">3 adımı tamamla, bonus XP topla.</div>
+        <ul class="quest-list">
+          <li id="questMoodRow"><span><span class="quest-icon">🎯</span>Ruh hali seç</span><span class="quest-status" id="questMood">Beklemede</span></li>
+          <li id="questFormRow"><span><span class="quest-icon">📝</span>Formu doldur</span><span class="quest-status" id="questForm">Beklemede</span></li>
+          <li id="questKvkkRow"><span><span class="quest-icon">✅</span>KVKK onayla</span><span class="quest-status" id="questKvkk">Beklemede</span></li>
+        </ul>
+        <div class="quest-reward" id="questReward">Tüm görevleri tamamla: +120 XP</div>
+      </div>
+
+      <div class="hud-card heart-card">
+        <div class="hud-title">Kalp Enerjisi</div>
+        <div class="heart-wrap">
+          <svg class="heart-svg" viewBox="0 0 100 100" aria-hidden="true">
+            <defs>
+              <clipPath id="heartClip">
+                <rect id="clipRect" x="0" y="100" width="100" height="0"></rect>
+              </clipPath>
+              <linearGradient id="heartGradient" x1="0%" x2="100%" y1="0%" y2="100%">
+                <stop offset="0%" stop-color="#5B8DEF"/>
+                <stop offset="100%" stop-color="#8EE1F7"/>
+              </linearGradient>
+            </defs>
+            <path d="M50 86 C20 66 8 46 8 30 C8 18 18 8 30 8 C39 8 45 13 50 20 C55 13 61 8 70 8 C82 8 92 18 92 30 C92 46 80 66 50 86 Z" fill="#e2e8f0"></path>
+            <path d="M50 86 C20 66 8 46 8 30 C8 18 18 8 30 8 C39 8 45 13 50 20 C55 13 61 8 70 8 C82 8 92 18 92 30 C92 46 80 66 50 86 Z" fill="url(#heartGradient)" clip-path="url(#heartClip)"></path>
+          </svg>
+          <div id="heartSparkles"></div>
+        </div>
+        <div class="heart-percent" id="heartPercent">0%</div>
+        <div class="heart-label" id="heartLabel">Formu doldurmaya başla!</div>
+      </div>
+    </div>
+
     <!-- Constellation Map -->
     <div class="constellation-container">
-      <div class="constellation-title">⭐ Takımyıldızımız</div>
-      <div class="constellation-subtitle" id="constellationSubtitle">Son katılımcılarımız burada!</div>
-      
-      <!-- Participants List -->
-      <div class="participants-list" id="participantsList">
-        <div class="participants-empty">Katılımcılar yükleniyor...</div>
-      </div>
-      
+      <div class="constellation-title">⭐ Yıldız Avı Mini Oyunu</div>
+      <div class="constellation-subtitle" id="constellationSubtitle">Yeni katılımcılar gökyüzünde parlıyor. Bir yıldız yakala, motive edici mesajı oku!</div>
+
       <!-- Constellation Canvas -->
       <div class="constellation-canvas" id="constellationCanvas"></div>
       <div class="star-tooltip" id="starTooltip"></div>
@@ -817,11 +968,28 @@ Bir Bulut Olsam Derneği ("Dernek") olarak, veri sorumlusu sıfatıyla, düzenle
     const closePopupBtn = document.getElementById('closePopup');
     const countdownText = document.getElementById('countdownText');
     const confettiCanvas = document.getElementById('confetti');
+    const starTooltip = document.getElementById('starTooltip');
+    const xpFill = document.getElementById('xpFill');
+    const xpValue = document.getElementById('xpValue');
+    const xpLevel = document.getElementById('xpLevel');
+    const xpHint = document.getElementById('xpHint');
+    const streakValue = document.getElementById('streakValue');
+    const streakLabel = document.getElementById('streakLabel');
+    const heroQuest = document.getElementById('heroQuest');
+    const heroMood = document.getElementById('heroMood');
+    const heroStreak = document.getElementById('heroStreak');
+    const questMood = document.getElementById('questMood');
+    const questForm = document.getElementById('questForm');
+    const questKvkk = document.getElementById('questKvkk');
+    const questReward = document.getElementById('questReward');
 
     // State
     let popupTimer = null;
     let selectedMood = null;
     let stars = [];
+    let xp = 0;
+    let streak = 0;
+    let lastCheckinDate = null;
 
     // ===== THEME =====
     function initTheme() {
@@ -860,12 +1028,101 @@ Bir Bulut Olsam Derneği ("Dernek") olarak, veri sorumlusu sıfatıyla, düzenle
       return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(e || '');
     }
 
+    // ===== GAME HUD =====
+    function loadGameState() {
+      xp = parseInt(localStorage.getItem('bboXp') || '0', 10);
+      streak = parseInt(localStorage.getItem('bboStreak') || '0', 10);
+      lastCheckinDate = localStorage.getItem('bboLastCheckin') || null;
+      updateXpUI();
+      updateStreakUI();
+      updateHeroChips();
+    }
+
+    function updateXpUI() {
+      const level = Math.max(1, Math.floor(xp / 100) + 1);
+      const current = xp % 100;
+      xpLevel.textContent = level;
+      xpValue.textContent = `${xp} XP`;
+      xpHint.textContent = `${100 - current || 100} XP sonra seviye ${level + 1}`;
+      xpFill.style.width = `${current}%`;
+    }
+
+    function awardXp(amount = 40, reason = 'XP kazandın!') {
+      xp = Math.min(9999, xp + amount);
+      localStorage.setItem('bboXp', xp);
+      updateXpUI();
+      setStatus(`${reason} (+${amount} XP)`, true);
+    }
+
+    function updateStreakUI() {
+      streakValue.textContent = streak;
+      streakLabel.textContent = streak > 0 ? `${streak} gündür seri devam ediyor` : 'Arka arkaya gün yok';
+      heroStreak.textContent = `Günlük seri: ${streak}`;
+    }
+
+    function recordStreak() {
+      const today = new Date();
+      const todayKey = today.toDateString();
+      const yesterday = new Date();
+      yesterday.setDate(today.getDate() - 1);
+      const yesterdayKey = yesterday.toDateString();
+
+      if (lastCheckinDate === todayKey) return; // already counted
+
+      if (lastCheckinDate === yesterdayKey) {
+        streak += 1;
+      } else {
+        streak = 1;
+      }
+
+      lastCheckinDate = todayKey;
+      localStorage.setItem('bboStreak', streak);
+      localStorage.setItem('bboLastCheckin', todayKey);
+      updateStreakUI();
+    }
+
+    function updateHeroChips() {
+      const completed = getQuestProgress().filter(Boolean).length;
+      heroQuest.textContent = `Günlük görev: ${completed}/3`;
+      heroMood.textContent = selectedMood ? `Mood kilidi: ${selectedMood}` : 'Mood kilidi: Açılmadı';
+    }
+
+    function updateQuestBoard() {
+      const [hasMood, hasForm, hasKvkk] = getQuestProgress();
+
+      questMood.textContent = hasMood ? 'Tamamlandı' : 'Beklemede';
+      questForm.textContent = hasForm ? 'Hazır' : 'Eksik';
+      questKvkk.textContent = hasKvkk ? 'Onaylandı' : 'Beklemede';
+
+      questMood.classList.toggle('quest-done', hasMood);
+      questForm.classList.toggle('quest-done', hasForm);
+      questKvkk.classList.toggle('quest-done', hasKvkk);
+
+      const doneCount = [hasMood, hasForm, hasKvkk].filter(Boolean).length;
+      questReward.textContent = doneCount === 3 ? 'Görev tamam! Check-in ile +120 XP kazan.' : `Tüm görevleri tamamla: +120 XP (${doneCount}/3)`;
+      updateHeroChips();
+    }
+
+    function getQuestProgress() {
+      const hasMood = !!selectedMood;
+      const hasForm = elName.value.trim() && validatePhone(elPhone.value) && validateEmail(elEmail.value) && !!elEvent.value;
+      const hasKvkk = elKvkk.checked;
+      return [hasMood, hasForm, hasKvkk];
+    }
+
     // ===== CONSTELLATION MAP =====
     function initConstellation() {
       const canvas = document.getElementById('constellationCanvas');
       const width = canvas.offsetWidth;
       const height = canvas.offsetHeight;
-      
+      const sparkMessages = [
+        'Geldin, gökyüzü parladı! 🌟',
+        'Bugünün kahramanı sensin!',
+        'Serini koru, XP topla!',
+        'Yeni bir arkadaş kazan!',
+        'Her yıldız bir tebessüm 😄'
+      ];
+
       // Generate 20 fixed stars
       stars = [];
       for (let i = 0; i < 20; i++) {
@@ -873,10 +1130,13 @@ Bir Bulut Olsam Derneği ("Dernek") olarak, veri sorumlusu sıfatıyla, düzenle
         star.className = 'star';
         star.style.left = Math.random() * (width - 10) + 'px';
         star.style.top = Math.random() * (height - 10) + 'px';
-        
+
         // Random twinkle delay
         star.style.animationDelay = Math.random() * 3 + 's';
-        
+
+        star.addEventListener('mouseenter', (e) => showTooltip(e, sparkMessages));
+        star.addEventListener('mouseleave', hideTooltip);
+
         canvas.appendChild(star);
         stars.push({
           element: star,
@@ -887,69 +1147,11 @@ Bir Bulut Olsam Derneği ("Dernek") olarak, veri sorumlusu sıfatıyla, düzenle
       
       // Draw constellation lines
       drawConstellationLines();
-      
-      // Load participant names
-      loadConstellationData();
-    }
-    
-    async function loadConstellationData() {
-      try {
-        let url = WEBAPP_URL + '?action=participants&limit=20';
-        
-        let data;
-        try {
-          const res = await fetch(url);
-          data = await res.json();
-        } catch(_) {
-          // JSONP fallback
-          data = await new Promise((resolve) => {
-            const cb = 'participantsCb_' + Math.random().toString(36).slice(2);
-            window[cb] = (d) => { resolve(d); delete window[cb]; };
-            const s = document.createElement('script');
-            s.src = url + '&callback=' + cb;
-            document.body.appendChild(s);
-          });
-        }
-        
-        if (data.ok && data.participants) {
-          renderParticipantsList(data.participants);
-        }
-      } catch(err) {
-        console.error('Constellation load error:', err);
-      }
-    }
-    
-    function renderParticipantsList(participants) {
-      const listEl = document.getElementById('participantsList');
-      const subtitle = document.getElementById('constellationSubtitle');
-      
-      if (participants.length === 0) {
-        listEl.innerHTML = '<div class="participants-empty">Henüz katılımcı yok. İlk sen ol! 🌟</div>';
-        subtitle.textContent = 'Henüz kimse katılmadı!';
-        return;
-      }
-      
-      // Update subtitle
-      subtitle.textContent = `Son ${participants.length} katılımcımız ⭐`;
-      
-      // Render participants
-      const grid = document.createElement('div');
-      grid.className = 'participants-grid';
-      
-      participants.forEach((p, i) => {
-        const item = document.createElement('div');
-        item.className = 'participant-item';
-        item.textContent = (i + 1) + '. ' + p.name;
-        grid.appendChild(item);
-      });
-      
-      listEl.innerHTML = '';
-      listEl.appendChild(grid);
     }
 
     function drawConstellationLines() {
       const canvas = document.getElementById('constellationCanvas');
-      
+
       // Connect nearby stars
       for (let i = 0; i < stars.length; i++) {
         for (let j = i + 1; j < stars.length; j++) {
@@ -977,6 +1179,19 @@ Bir Bulut Olsam Derneği ("Dernek") olarak, veri sorumlusu sıfatıyla, düzenle
       }
     }
 
+    function showTooltip(evt, messages) {
+      const rect = evt.currentTarget.getBoundingClientRect();
+      const text = messages[Math.floor(Math.random() * messages.length)];
+      starTooltip.textContent = text;
+      starTooltip.style.left = window.scrollX + rect.left + rect.width / 2 + 'px';
+      starTooltip.style.top = window.scrollY + rect.top - 10 + 'px';
+      starTooltip.classList.add('show');
+    }
+
+    function hideTooltip() {
+      starTooltip.classList.remove('show');
+    }
+
     // ===== MOOD SELECTOR =====
     document.querySelectorAll('.mood-option').forEach(option => {
       option.addEventListener('click', function() {
@@ -990,11 +1205,11 @@ Bir Bulut Olsam Derneği ("Dernek") olarak, veri sorumlusu sıfatıyla, düzenle
           cool: 'Havalı',
           tired: 'Yorgun'
         };
-        
-        document.getElementById('moodStats').textContent = 
+
+        document.getElementById('moodStats').textContent =
           `Harika! ${moodNames[selectedMood]} hissettiğini kaydettik! 🎉`;
-        
-        updateButton();
+
+        updateProgressUI();
       });
     });
     
@@ -1137,9 +1352,6 @@ Bir Bulut Olsam Derneği ("Dernek") olarak, veri sorumlusu sıfatıyla, düzenle
         const remaining = 5 - filledItems.length;
         heartLabel.textContent = `${filledItems.join(', ')} ✓ • ${remaining} alan kaldı`;
       }
-      
-      // Update button state
-      updateButton();
     }
     
     function addHeartSparkle() {
@@ -1162,23 +1374,29 @@ Bir Bulut Olsam Derneği ("Dernek") olarak, veri sorumlusu sıfatıyla, düzenle
 
     // ===== FORM VALIDATION =====
     function updateButton() {
-      const ok = elEvent.value && 
-                 elName.value.trim() && 
-                 validatePhone(elPhone.value) && 
-                 validateEmail(elEmail.value) && 
+      const ok = elEvent.value &&
+                 elName.value.trim() &&
+                 validatePhone(elPhone.value) &&
+                 validateEmail(elEmail.value) &&
                  elKvkk.checked &&
                  selectedMood;
       btn.disabled = !ok;
     }
 
-    elEvent.addEventListener('change', () => {
+    function updateProgressUI() {
       updateButton();
+      updateHeart();
+      updateQuestBoard();
+    }
+
+    elEvent.addEventListener('change', () => {
+      updateProgressUI();
       loadMoodStats();
     });
-    elName.addEventListener('input', updateButton);
-    elPhone.addEventListener('input', updateButton);
-    elEmail.addEventListener('input', updateButton);
-    elKvkk.addEventListener('change', updateButton);
+    elName.addEventListener('input', updateProgressUI);
+    elPhone.addEventListener('input', updateProgressUI);
+    elEmail.addEventListener('input', updateProgressUI);
+    elKvkk.addEventListener('change', updateProgressUI);
 
     // ===== LOAD EVENTS =====
     async function loadEventsFetch() {
@@ -1222,7 +1440,7 @@ Bir Bulut Olsam Derneği ("Dernek") olarak, veri sorumlusu sıfatıyla, düzenle
           setStatus('');
         }
 
-        updateButton();
+        updateProgressUI();
       } catch (err) {
         setStatus('Etkinlik listesi yüklenemedi: ' + err.message, false);
       }
@@ -1269,9 +1487,10 @@ Bir Bulut Olsam Derneği ("Dernek") olarak, veri sorumlusu sıfatıyla, düzenle
 
         // Success
         setStatus('Check-in başarılı! İyi etkinlikler! ☁️', true);
+        awardXp(120, 'Görev bonusu');
+        recordStreak();
 
-        // Reload constellation and mood stats
-        await loadConstellationData();
+        // Reload mood stats
         await loadMoodStats();
 
         // Reset form
@@ -1281,7 +1500,7 @@ Bir Bulut Olsam Derneği ("Dernek") olarak, veri sorumlusu sıfatıyla, düzenle
         elKvkk.checked = false;
         document.querySelectorAll('.mood-option').forEach(o => o.classList.remove('selected'));
         selectedMood = null;
-        updateButton();
+        updateProgressUI();
 
         // Show popup
         showPopup();
@@ -1434,13 +1653,13 @@ Bir Bulut Olsam Derneği ("Dernek") olarak, veri sorumlusu sıfatıyla, düzenle
     // ===== INITIALIZATION =====
     function init() {
       initTheme();
+      loadGameState();
       initConstellation();
       loadEvents();
-      updateButton();
-      
+      updateProgressUI();
+
       // Auto-refresh constellation and mood stats every 60 seconds
       setInterval(() => {
-        loadConstellationData(); // Refresh participant names
         if (elEvent.value) {
           loadMoodStats(); // Refresh mood stats
         }
