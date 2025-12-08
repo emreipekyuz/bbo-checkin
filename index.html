@@ -1,1469 +1,592 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="tr">
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,user-scalable=no" />
-  <title>Bir Bulut Olsam — Etkinlik Check-in</title>
-  <meta name="theme-color" content="#5B8DEF" />
-  <meta name="mobile-web-app-capable" content="yes">
-  <meta name="apple-mobile-web-app-capable" content="yes">
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <meta charset="UTF-8">
+  <title>Bir Bulut Olsam - Etkinlik Kaydı</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <base target="_top">
   
+  <!-- Font: Quicksand -->
+  <link href="https://fonts.googleapis.com/css2?family=Quicksand:wght@400;600;700&display=swap" rel="stylesheet">
+  
+  <!-- Tailwind CSS (Tasarım Framework) -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  
+  <!-- SweetAlert2 (Şık Uyarı Pencereleri) -->
+  <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+  
+  <!-- Canvas Confetti (Konfeti Efekti) -->
+  <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+  
+  <!-- QR Code Generator -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+
   <style>
-    :root{
-      --bg:#F4F7FF; 
-      --card:#FFFFFF; 
-      --primary:#5B8DEF; 
-      --primary-700:#355CD6; 
-      --primary-light:#dbeafe;
-      --accent:#8EE1F7;
-      --ok:#0f766e; 
-      --err:#b91c1c; 
-      --text:#111827; 
-      --muted:#64748b; 
-      --shadow:0 10px 30px rgba(43,78,255,.12);
-      --radius:18px;
-      --transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    /* --- Temel Ayarlar --- */
+    body {
+      font-family: 'Quicksand', sans-serif;
+      /* Gökyüzü Gradient */
+      background: linear-gradient(180deg, #89f7fe 0%, #66a6ff 100%);
+      min-height: 100vh;
+      overflow: hidden; /* Sayfa kaymasını engelle (Mobil hissi için) */
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      -webkit-tap-highlight-color: transparent; /* Mobilde tıklama gölgesini kaldır */
+    }
+
+    /* --- Hareketli Bulut Animasyonları --- */
+    .cloud {
+      position: absolute;
+      background: rgba(255, 255, 255, 0.6);
+      border-radius: 50%;
+      animation: floatCloud 25s linear infinite;
+      z-index: 0;
+      pointer-events: none; /* Tıklamayı engelle */
+    }
+    .cloud::after, .cloud::before {
+      content: '';
+      position: absolute;
+      background: inherit;
+      border-radius: 50%;
     }
     
-    [data-theme="dark"] {
-      --bg:#0f172a;
-      --card:#1e293b;
-      --text:#f1f5f9;
-      --muted:#94a3b8;
-      --primary-light:#1e3a8a;
+    /* Bulut 1 */
+    .c1 { width: 100px; height: 40px; top: 10%; left: -20%; animation-duration: 28s; }
+    .c1::after { width: 40px; height: 40px; top: -20px; left: 15px; }
+    .c1::before { width: 50px; height: 50px; top: -30px; left: 40px; }
+
+    /* Bulut 2 */
+    .c2 { width: 140px; height: 60px; top: 40%; left: -30%; animation-duration: 35s; opacity: 0.4; }
+    .c2::after { width: 60px; height: 60px; top: -30px; left: 25px; }
+    .c2::before { width: 70px; height: 70px; top: -45px; left: 60px; }
+    
+    /* Bulut 3 */
+    .c3 { width: 80px; height: 30px; top: 75%; left: -15%; animation-duration: 20s; opacity: 0.7; }
+    .c3::after { width: 30px; height: 30px; top: -15px; left: 10px; }
+
+    @keyframes floatCloud {
+      0% { transform: translateX(-150px); }
+      100% { transform: translateX(120vw); }
     }
-    
-    * { box-sizing:border-box; margin:0; padding:0; -webkit-tap-highlight-color:transparent; }
-    
-    html,body {
-      margin:0;
-      background:radial-gradient(1200px 600px at 80% -10%, var(--primary-light) 0%, transparent 60%), var(--bg);
-      color:var(--text);
-      font-family:'Inter',ui-sans-serif,system-ui,-apple-system,"Segoe UI",Roboto,Arial;
-      transition: var(--transition);
-      overflow-x:hidden;
+
+    /* --- Glassmorphism Kart Tasarımı --- */
+    .glass-card {
+      background: rgba(255, 255, 255, 0.90);
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+      border: 1px solid rgba(255, 255, 255, 0.8);
+      box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.15);
+      z-index: 10;
+      transition: all 0.3s ease;
     }
-    
-    body { min-height:100vh; position:relative; }
-    
-    /* NAVBAR - Mobile Optimized */
-    .navbar {
-      background:var(--card);
-      border-bottom:1px solid rgba(0,0,0,.08);
-      padding:14px 0;
-      position:sticky;
-      top:0;
-      z-index:100;
-      backdrop-filter:blur(10px);
-      box-shadow:var(--shadow);
+
+    /* --- Avatar Seçimi --- */
+    .avatar-option {
+      transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+      cursor: pointer;
+      opacity: 0.5;
+      filter: grayscale(100%);
+      transform: scale(0.9);
     }
-    
-    .navbar-content {
-      max-width:1200px;
-      margin:0 auto;
-      padding:0 16px;
-      display:flex;
-      align-items:center;
-      justify-content:space-between;
+    .avatar-option:hover { opacity: 0.8; }
+    .avatar-option.selected {
+      transform: scale(1.15);
+      opacity: 1;
+      filter: grayscale(0%);
+      background: #EFF6FF; /* blue-50 */
+      border-radius: 50%;
+      box-shadow: 0 0 0 3px #60A5FA; /* blue-400 */
     }
-    
-    .navbar-brand {
-      display:flex;
-      align-items:center;
-      gap:10px;
-    }
-    
-    .navbar-logo {
-      width:36px;
-      height:36px;
-      border-radius:10px;
-      background:linear-gradient(135deg,var(--primary),var(--accent));
-      box-shadow:0 4px 12px rgba(91,141,239,.35);
-      position:relative;
-      flex-shrink:0;
-    }
-    
-    .navbar-logo:before,.navbar-logo:after {
-      content:"";
-      position:absolute;
-      background:#fff;
-      border-radius:999px;
-      opacity:.9;
-    }
-    
-    .navbar-logo:before { width:14px; height:14px; left:6px; top:11px; }
-    .navbar-logo:after { width:20px; height:20px; left:14px; top:6px; }
-    
-    .navbar-text h1 {
-      font-size:clamp(0.95rem, 4vw, 1.2rem);
-      font-weight:700;
-      margin:0;
-      line-height:1.2;
-    }
-    
-    .navbar-text .sub {
-      font-size:clamp(0.75rem, 3vw, 0.85rem);
-      color:var(--muted);
-      display:none;
-    }
-    
-    @media (min-width:480px) {
-      .navbar-text .sub { display:block; }
-    }
-    
-    .theme-toggle {
-      background:var(--card);
-      border:1px solid rgba(0,0,0,.1);
-      width:40px;
-      height:40px;
-      border-radius:10px;
-      display:flex;
-      align-items:center;
-      justify-content:center;
-      cursor:pointer;
-      transition:var(--transition);
-      font-size:1.2rem;
-      flex-shrink:0;
-      touch-action:manipulation;
-    }
-    
-    .theme-toggle:active { transform:scale(0.95); }
-    
-    /* CONSTELLATION MAP */
-    .constellation-container {
-      background:linear-gradient(180deg, #0f172a 0%, #1e293b 100%);
-      border-radius:var(--radius);
-      padding:24px 16px;
-      margin:16px;
-      position:relative;
-      overflow:hidden;
-      min-height:200px;
-      box-shadow:var(--shadow);
-    }
-    
-    .constellation-title {
-      text-align:center;
-      color:#fff;
-      font-size:clamp(1rem, 4vw, 1.3rem);
-      font-weight:700;
-      margin-bottom:8px;
-      position:relative;
-      z-index:2;
-    }
-    
-    .constellation-subtitle {
-      text-align:center;
-      color:rgba(255,255,255,0.7);
-      font-size:clamp(0.8rem, 3vw, 0.9rem);
-      margin-bottom:16px;
-      position:relative;
-      z-index:2;
-    }
-    
-    .constellation-canvas {
-      width:100%;
-      height:180px;
-      position:relative;
-      touch-action:pan-y;
-    }
-    
-    @media (min-width:768px) {
-      .constellation-canvas { height:250px; }
-    }
-    
-    .star {
-      position:absolute;
-      width:8px;
-      height:8px;
-      background:#fff;
-      border-radius:50%;
-      box-shadow:0 0 10px rgba(255,255,255,0.8), 0 0 20px rgba(255,255,255,0.4);
-      animation:twinkle 3s ease-in-out infinite;
-      cursor:pointer;
-      transition:transform 0.2s;
-      touch-action:manipulation;
-    }
-    
-    .star:active { transform:scale(1.3); }
-    
-    @keyframes twinkle {
-      0%, 100% { opacity:1; transform:scale(1); }
-      50% { opacity:0.6; transform:scale(0.9); }
-    }
-    
-    .star-line {
-      position:absolute;
-      background:rgba(255,255,255,0.2);
-      height:1px;
-      transform-origin:0 0;
-      pointer-events:none;
-    }
-    
-    .star-tooltip {
-      position:absolute;
-      background:rgba(0,0,0,0.9);
-      color:#fff;
-      padding:6px 10px;
-      border-radius:6px;
-      font-size:0.8rem;
-      white-space:nowrap;
-      pointer-events:none;
-      z-index:10;
-      opacity:0;
-      transition:opacity 0.2s;
-    }
-    
-    .star-tooltip.show { opacity:1; }
-    
-    /* Participants List */
-    .participants-list {
-      background:rgba(255,255,255,0.05);
-      border-radius:12px;
-      padding:12px;
-      margin-bottom:16px;
-      max-height:160px;
-      overflow-y:auto;
-      position:relative;
-      z-index:2;
-    }
-    
-    .participants-list::-webkit-scrollbar {
-      width:4px;
-    }
-    
-    .participants-list::-webkit-scrollbar-track {
-      background:rgba(255,255,255,0.1);
-      border-radius:2px;
-    }
-    
-    .participants-list::-webkit-scrollbar-thumb {
-      background:rgba(255,255,255,0.3);
-      border-radius:2px;
-    }
-    
-    .participants-grid {
-      display:flex;
-      flex-wrap:wrap;
-      gap:8px;
-    }
-    
-    .participant-item {
-      font-size:0.8rem;
-      color:#fff;
-      padding:4px 10px;
-      background:rgba(255,255,255,0.1);
-      border-radius:16px;
-      border:1px solid rgba(255,255,255,0.2);
-      white-space:nowrap;
-    }
-    
-    .participants-empty {
-      text-align:center;
-      color:rgba(255,255,255,0.5);
-      font-size:0.85rem;
-      padding:16px;
-      font-style:italic;
-    }
-    
-    /* MOOD SELECTOR */
-    .mood-container {
-      background:var(--card);
-      border-radius:var(--radius);
-      padding:20px 16px;
-      margin:16px;
-      box-shadow:var(--shadow);
-      border:1px solid rgba(0,0,0,.05);
-    }
-    
-    .mood-title {
-      text-align:center;
-      font-size:clamp(1rem, 4vw, 1.2rem);
-      font-weight:700;
-      margin-bottom:16px;
-    }
-    
-    .mood-grid {
-      display:grid;
-      grid-template-columns:repeat(auto-fit, minmax(70px, 1fr));
-      gap:12px;
-      max-width:400px;
-      margin:0 auto;
-    }
-    
-    @media (min-width:480px) {
-      .mood-grid { gap:16px; }
-    }
-    
-    .mood-option {
-      background:linear-gradient(135deg, rgba(91,141,239,0.05), rgba(142,225,247,0.05));
-      border:2px solid transparent;
-      border-radius:16px;
-      padding:16px 8px;
-      text-align:center;
-      cursor:pointer;
-      transition:var(--transition);
-      touch-action:manipulation;
-      user-select:none;
-    }
-    
-    .mood-option:active { transform:scale(0.95); }
-    
-    .mood-option:hover {
-      background:linear-gradient(135deg, rgba(91,141,239,0.1), rgba(142,225,247,0.1));
-      transform:translateY(-2px);
-      box-shadow:0 4px 12px rgba(91,141,239,0.2);
-    }
-    
-    .mood-option.selected {
-      background:linear-gradient(135deg, var(--primary), var(--accent));
-      border-color:var(--primary);
-      transform:scale(1.05);
-      box-shadow:0 6px 20px rgba(91,141,239,0.4);
-    }
-    
-    .mood-emoji {
-      font-size:clamp(2rem, 8vw, 2.5rem);
-      display:block;
-      margin-bottom:6px;
-      line-height:1;
-    }
-    
-    .mood-label {
-      font-size:clamp(0.75rem, 3vw, 0.85rem);
-      font-weight:600;
-      color:var(--text);
-    }
-    
-    .mood-option.selected .mood-label { color:#fff; }
-    
-    .mood-stats {
-      margin-top:16px;
-      padding:12px;
-      background:rgba(91,141,239,0.05);
-      border-radius:12px;
-      text-align:center;
-      font-size:clamp(0.8rem, 3vw, 0.9rem);
-      color:var(--muted);
-    }
-    
-    /* Star name labels - always visible */
-    .star-name {
-      position:absolute;
-      bottom:-22px;
-      left:50%;
-      transform:translateX(-50%);
-      background:rgba(0,0,0,0.8);
-      color:#fff;
-      padding:4px 8px;
-      border-radius:6px;
-      font-size:0.7rem;
-      white-space:nowrap;
-      pointer-events:none;
-      z-index:5;
-      box-shadow:0 2px 8px rgba(0,0,0,0.3);
-    }
-    
-    /* FORM STYLES - Mobile First */
-    .form-container {
-      background:var(--card);
-      border-radius:var(--radius);
-      padding:20px 16px;
-      margin:16px;
-      box-shadow:var(--shadow);
-      border:1px solid rgba(0,0,0,.05);
-    }
-    
-    label {
-      display:block;
-      font-weight:600;
-      margin:12px 0 6px;
-      font-size:clamp(0.85rem, 3.5vw, 0.95rem);
-    }
-    
-    select, input[type="text"], input[type="tel"], input[type="email"] {
-      width:100%;
-      padding:14px 12px;
-      border:2px solid #e5e7eb;
-      border-radius:12px;
-      font-size:clamp(0.95rem, 4vw, 1rem);
-      outline:none;
-      background:var(--card);
-      color:var(--text);
-      transition:var(--transition);
-      -webkit-appearance:none;
-      appearance:none;
-      touch-action:manipulation;
-    }
-    
-    select:focus, input:focus {
-      border-color:var(--primary);
-      box-shadow:0 0 0 4px rgba(91,141,239,.12);
-    }
-    
-    .grid {
-      display:grid;
-      grid-template-columns:1fr;
-      gap:12px;
-    }
-    
-    @media (min-width:640px) {
-      .grid { grid-template-columns:1fr 1fr; }
-    }
-    
-    /* KVKK */
-    .kvkk-wrap {
-      margin-top:16px;
-      border:1px solid #e2e8f0;
-      border-radius:14px;
-      overflow:hidden;
-      background:#fafcff;
-    }
-    
-    [data-theme="dark"] .kvkk-wrap {
-      background:rgba(255,255,255,.03);
-      border-color:rgba(255,255,255,.1);
-    }
-    
-    .kvkk-head {
-      display:flex;
-      align-items:center;
-      justify-content:space-between;
-      gap:8px;
-      padding:12px;
-      background:linear-gradient(180deg,#f0f7ff,#ecf3ff);
-      border-bottom:1px solid #e2e8f0;
-    }
-    
-    [data-theme="dark"] .kvkk-head { background:rgba(91,141,239,.1); }
-    
-    .kvkk-head h3 {
-      margin:0;
-      font-size:clamp(0.85rem, 3.5vw, 1rem);
-      line-height:1.3;
-    }
-    
-    .kvkk-badge {
-      font-size:clamp(0.7rem, 3vw, 0.8rem);
-      color:#334155;
-      background:#e2e8f0;
-      padding:4px 8px;
-      border-radius:999px;
-      white-space:nowrap;
-      flex-shrink:0;
-    }
-    
-    .kvkk-content {
-      padding:12px;
-      line-height:1.6;
-      white-space:pre-wrap;
-      font-size:clamp(0.8rem, 3.5vw, 0.95rem);
-      color:var(--muted);
-      max-height:150px;
-      overflow-y:auto;
-      -webkit-overflow-scrolling:touch;
-    }
-    
-    .kvkk-controls {
-      display:flex;
-      align-items:center;
-      gap:10px;
-      margin-top:12px;
-      padding:0 12px 12px;
-    }
-    
-    .checkbox {
-      width:22px;
-      height:22px;
-      cursor:pointer;
-      flex-shrink:0;
-      touch-action:manipulation;
-    }
-    
-    .kvkk-controls label {
-      margin:0;
-      font-size:clamp(0.8rem, 3.5vw, 0.9rem);
-      line-height:1.4;
-    }
-    
-    /* BUTTON - Touch Optimized */
-    .btn {
-      width:100%;
-      padding:16px;
-      border:0;
-      border-radius:12px;
-      font-weight:700;
-      font-size:clamp(0.95rem, 4vw, 1.05rem);
-      color:#fff;
-      background:linear-gradient(135deg,var(--primary),var(--primary-700));
-      cursor:pointer;
-      box-shadow:0 10px 24px rgba(53,92,214,.25);
-      transition:var(--transition);
-      position:relative;
-      overflow:hidden;
-      touch-action:manipulation;
-      -webkit-tap-highlight-color:transparent;
-      min-height:52px;
-    }
-    
-    .btn:active:not(:disabled) { transform:scale(0.98); }
-    
-    .btn:disabled {
-      opacity:.65;
-      cursor:not-allowed;
-      box-shadow:none;
-    }
-    
-    .status {
-      margin-top:12px;
-      font-size:clamp(0.85rem, 3.5vw, 0.95rem);
-      padding:12px;
-      border-radius:10px;
-      animation:slideIn 0.3s ease-out;
-    }
-    
+
+    /* --- Animasyonlar --- */
+    .slide-in { animation: slideIn 0.4s ease-out forwards; }
+    .fade-out { animation: fadeOut 0.3s ease-in forwards; }
+
     @keyframes slideIn {
-      from { opacity:0; transform:translateY(-10px); }
-      to { opacity:1; transform:translateY(0); }
+      from { opacity: 0; transform: translateY(15px); }
+      to { opacity: 1; transform: translateY(0); }
     }
-    
-    .ok {
-      color:var(--ok);
-      background:rgba(15,118,110,.1);
-      border:1px solid rgba(15,118,110,.2);
+    @keyframes fadeOut {
+      from { opacity: 1; }
+      to { opacity: 0; }
     }
-    
-    .err {
-      color:var(--err);
-      background:rgba(185,28,28,.1);
-      border:1px solid rgba(185,28,28,.2);
+
+    /* --- Yükleniyor Spinner --- */
+    .loader {
+      width: 40px;
+      height: 40px;
+      border: 4px solid #FFF;
+      border-bottom-color: #3B82F6;
+      border-radius: 50%;
+      display: inline-block;
+      box-sizing: border-box;
+      animation: rotation 0.8s linear infinite;
     }
-    
-    /* FOOTER */
-    .footer {
-      text-align:center;
-      color:var(--muted);
-      font-size:clamp(0.8rem, 3.5vw, 0.9rem);
-      margin-top:24px;
-      padding:20px 16px;
-    }
-    
-    .footer a {
-      color:var(--primary);
-      text-decoration:none;
-    }
-    
-    /* SUCCESS MODAL - Mobile Optimized */
-    .overlay {
-      position:fixed;
-      inset:0;
-      background:rgba(9,12,22,.85);
-      backdrop-filter:saturate(120%) blur(8px);
-      display:none;
-      align-items:center;
-      justify-content:center;
-      z-index:9999;
-      padding:16px;
-      animation:overlayFadeIn 0.3s ease-out;
-    }
-    
-    @keyframes overlayFadeIn {
-      from { opacity:0; }
-      to { opacity:1; }
-    }
-    
-    .overlay.open { display:flex; }
-    
-    .modal {
-      max-width:min(500px, 100%);
-      width:100%;
-      background:var(--card);
-      border-radius:22px;
-      padding:28px 20px;
-      box-shadow:0 24px 80px rgba(0,0,0,.3);
-      text-align:center;
-      position:relative;
-      overflow:hidden;
-      border:1px solid rgba(255,255,255,.1);
-      animation:modalSlideIn 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
-    }
-    
-    @keyframes modalSlideIn {
-      from { opacity:0; transform:scale(0.8) translateY(40px); }
-      to { opacity:1; transform:scale(1) translateY(0); }
-    }
-    
-    .modal h2 {
-      font-size:clamp(1.3rem, 5vw, 1.8rem);
-      margin:0 0 8px;
-      line-height:1.3;
-    }
-    
-    .modal .lead {
-      font-weight:800;
-      letter-spacing:.5px;
-      font-size:clamp(1.2rem, 5vw, 1.6rem);
-      background:linear-gradient(135deg,#4da3ff,#7bdaff,#7bf5c5);
-      -webkit-background-clip:text;
-      background-clip:text;
-      color:transparent;
-      margin-bottom:12px;
-    }
-    
-    .modal p {
-      margin:0 0 8px;
-      color:var(--text);
-      line-height:1.6;
-      font-size:clamp(0.9rem, 4vw, 1rem);
-    }
-    
-    .modal .sub {
-      font-size:clamp(0.8rem, 3.5vw, 0.9rem);
-      color:var(--muted);
-    }
-    
-    .modal .btn-close {
-      margin-top:20px;
-      display:inline-block;
-      padding:14px 28px;
-      border-radius:12px;
-      border:0;
-      background:linear-gradient(135deg,#111,#333);
-      color:#fff;
-      font-weight:700;
-      cursor:pointer;
-      transition:var(--transition);
-      touch-action:manipulation;
-      font-size:clamp(0.9rem, 4vw, 1rem);
-      min-height:48px;
-    }
-    
-    .modal .btn-close:active { transform:scale(0.95); }
-    
-    .confetti {
-      position:absolute;
-      inset:0;
-      pointer-events:none;
-    }
-    
-    /* SPINNER */
-    .spinner {
-      display:inline-block;
-      width:18px;
-      height:18px;
-      border:3px solid rgba(255,255,255,.3);
-      border-top-color:white;
-      border-radius:50%;
-      animation:spin 0.8s linear infinite;
-    }
-    
-    @keyframes spin {
-      to { transform:rotate(360deg); }
-    }
-    
-    /* MOBILE SPECIFIC */
-    @media (max-width:767px) {
-      .wrap { padding:0; }
-      .navbar-content { padding:0 12px; }
-    }
-    
-    /* Prevent zoom on input focus (iOS) */
-    @media (max-width:767px) {
-      input[type="text"], input[type="tel"], input[type="email"], select {
-        font-size:16px !important;
-      }
+    @keyframes rotation { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+
+    /* --- Input Odaklanma --- */
+    .input-field:focus {
+      outline: none;
+      border-color: #60A5FA;
+      box-shadow: 0 0 0 4px rgba(96, 165, 250, 0.2);
     }
   </style>
 </head>
-<body>
-  <!-- Navigation -->
-  <nav class="navbar">
-    <div class="navbar-content">
-      <div class="navbar-brand">
-        <div class="navbar-logo" aria-hidden="true"></div>
-        <div class="navbar-text">
-          <h1>Bir Bulut Olsam</h1>
-          <div class="sub">Etkinlik Check-in</div>
-        </div>
-      </div>
-      <button class="theme-toggle" id="themeToggle" aria-label="Tema Değiştir">
-        <span id="themeIcon">🌙</span>
-      </button>
-    </div>
-  </nav>
+<body class="antialiased text-gray-800">
 
-  <div class="wrap">
-    <!-- Constellation Map -->
-    <div class="constellation-container">
-      <div class="constellation-title">⭐ Takımyıldızımız</div>
-      <div class="constellation-subtitle" id="constellationSubtitle">Son katılımcılarımız burada!</div>
+  <!-- Arkaplan Dekorasyon -->
+  <div class="cloud c1"></div>
+  <div class="cloud c2"></div>
+  <div class="cloud c3"></div>
+
+  <!-- Ana Kapsayıcı -->
+  <div class="w-full max-w-md p-4 relative">
+    
+    <div id="mainCard" class="glass-card w-full rounded-3xl p-6 sm:p-8 relative overflow-hidden">
       
-      <!-- Participants List -->
-      <div class="participants-list" id="participantsList">
-        <div class="participants-empty">Katılımcılar yükleniyor...</div>
+      <!-- Logo ve Başlık -->
+      <div class="flex flex-col items-center mb-6 select-none">
+        <div class="w-14 h-14 bg-white rounded-full flex items-center justify-center shadow-md text-3xl mb-3 animate-bounce">
+          ☁️
+        </div>
+        <h1 class="text-xl font-bold text-blue-900 tracking-wide text-center uppercase">BİR BULUT OLSAM</h1>
+        <p class="text-xs text-blue-500 font-bold uppercase tracking-widest text-center mt-1">Etkinlik Kayıt Sistemi</p>
       </div>
-      
-      <!-- Constellation Canvas -->
-      <div class="constellation-canvas" id="constellationCanvas"></div>
-      <div class="star-tooltip" id="starTooltip"></div>
-    </div>
 
-    <!-- Mood Selector -->
-    <div class="mood-container">
-      <div class="mood-title">Bugün nasıl hissediyorsun? 😊</div>
-      <div class="mood-grid">
-        <div class="mood-option" data-mood="happy">
-          <span class="mood-emoji">😊</span>
-          <span class="mood-label">Mutlu</span>
+      <!-- ========================================== -->
+      <!-- BÖLÜM 1: Etkinlik Seçimi (Rota) -->
+      <!-- ========================================== -->
+      <div id="step1" class="slide-in">
+        <h2 class="text-center text-lg text-gray-700 font-bold mb-5">Hangi Etkinliğe Geldin?</h2>
+        
+        <!-- Yükleniyor... -->
+        <div id="loadingEvents" class="flex flex-col items-center justify-center py-10">
+          <span class="loader border-blue-200 border-b-blue-600 mb-3"></span>
+          <span class="text-sm font-semibold text-blue-400">Rotalar taranıyor...</span>
         </div>
-        <div class="mood-option" data-mood="excited">
-          <span class="mood-emoji">🤗</span>
-          <span class="mood-label">Heyecanlı</span>
-        </div>
-        <div class="mood-option" data-mood="cool">
-          <span class="mood-emoji">😎</span>
-          <span class="mood-label">Havalı</span>
-        </div>
-        <div class="mood-option" data-mood="tired">
-          <span class="mood-emoji">😴</span>
-          <span class="mood-label">Yorgun</span>
-        </div>
-      </div>
-      <div class="mood-stats" id="moodStats">Bir ruh hali seç ve check-in yap!</div>
-    </div>
 
-    <!-- Check-in Form -->
-    <div class="form-container">
-      <label for="event">Etkinlik Seç *</label>
-      <select id="event">
-        <option value="">Yükleniyor…</option>
-      </select>
-
-      <div class="grid">
-        <div>
-          <label for="name">Ad Soyad *</label>
-          <input id="name" type="text" placeholder="Ad Soyad" autocomplete="name" />
+        <!-- Etkinlik Listesi -->
+        <div id="eventList" class="space-y-3 hidden overflow-y-auto max-h-[300px] pr-1">
+          <!-- Dinamik İçerik Buraya Gelecek -->
         </div>
-        <div>
-          <label for="phone">Telefon *</label>
-          <input id="phone" type="tel" placeholder="05xx xxx xx xx" autocomplete="tel" inputmode="tel" />
+
+        <!-- Hata Durumu (Retry Button) -->
+        <div id="errorState" class="hidden text-center py-4">
+          <p class="text-red-500 text-sm mb-2">Etkinlikler yüklenemedi.</p>
+          <button onclick="loadEvents()" class="text-xs bg-gray-100 hover:bg-gray-200 px-3 py-2 rounded-lg">Tekrar Dene</button>
         </div>
       </div>
 
-      <div>
-        <label for="email">E-posta *</label>
-        <input id="email" type="email" placeholder="ornek@eposta.com" autocomplete="email" inputmode="email" />
+      <!-- ========================================== -->
+      <!-- BÖLÜM 2: Kullanıcı Formu (Giriş) -->
+      <!-- ========================================== -->
+      <div id="step2" class="hidden">
+        <div class="flex items-center mb-2">
+          <button type="button" onclick="changeStep(1)" class="text-gray-400 hover:text-blue-500 text-sm flex items-center gap-1 transition-colors px-2 py-1 -ml-2 rounded-md hover:bg-blue-50">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
+            </svg>
+            Geri
+          </button>
+        </div>
+
+        <h2 class="text-center text-xl text-gray-800 font-bold mb-1">Aramıza Hoşgeldin!</h2>
+        <p class="text-center text-xs text-gray-500 mb-6 font-medium">Biniş kartın için bilgilerini tamamla</p>
+
+        <!-- Avatar Seçici -->
+        <div class="flex justify-center gap-4 mb-6 select-none">
+          <div class="avatar-option p-2 text-2xl" onclick="selectAvatar('🚀')" id="av1">🚀</div>
+          <div class="avatar-option p-2 text-2xl selected" onclick="selectAvatar('🌥️')" id="av2">🌥️</div>
+          <div class="avatar-option p-2 text-2xl" onclick="selectAvatar('🌟')" id="av3">🌟</div>
+          <div class="avatar-option p-2 text-2xl" onclick="selectAvatar('🎈')" id="av4">🎈</div>
+        </div>
+
+        <form id="checkinForm" onsubmit="handleSubmit(event)" class="space-y-4">
+          <!-- Gizli Veriler -->
+          <input type="hidden" id="selectedEventCode">
+          <input type="hidden" id="selectedEventName">
+          <input type="hidden" id="selectedAvatar" value="🌥️">
+
+          <!-- İsim -->
+          <div class="relative group">
+            <span class="absolute left-4 top-3.5 text-gray-400 group-focus-within:text-blue-500 transition-colors">👤</span>
+            <input type="text" id="fullName" required placeholder="Adın Soyadın" autocomplete="name"
+              class="input-field w-full bg-blue-50/50 border border-blue-100 rounded-xl py-3 pl-12 pr-4 text-gray-700 font-semibold placeholder-gray-400 transition-all">
+          </div>
+
+          <!-- Telefon -->
+          <div class="relative group">
+            <span class="absolute left-4 top-3.5 text-gray-400 group-focus-within:text-blue-500 transition-colors">📱</span>
+            <input type="tel" id="phone" required placeholder="Telefon Numaran (5XX...)" autocomplete="tel"
+              class="input-field w-full bg-blue-50/50 border border-blue-100 rounded-xl py-3 pl-12 pr-4 text-gray-700 font-semibold placeholder-gray-400 transition-all">
+          </div>
+
+          <!-- Email -->
+          <div class="relative group">
+            <span class="absolute left-4 top-3.5 text-gray-400 group-focus-within:text-blue-500 transition-colors">📧</span>
+            <input type="email" id="email" required placeholder="E-Posta Adresin" autocomplete="email"
+              class="input-field w-full bg-blue-50/50 border border-blue-100 rounded-xl py-3 pl-12 pr-4 text-gray-700 font-semibold placeholder-gray-400 transition-all">
+          </div>
+
+          <!-- Submit Butonu -->
+          <button type="submit" id="submitBtn" class="w-full bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white font-bold py-4 rounded-xl shadow-lg shadow-blue-200 transform transition active:scale-[0.98] flex items-center justify-center gap-2 mt-4">
+            <span>Kaydı Gönder</span>
+            <span class="text-lg">✈️</span>
+          </button>
+        </form>
       </div>
 
-      <!-- KVKK -->
-      <div class="kvkk-wrap">
-        <div class="kvkk-head">
-          <h3>KVKK Aydınlatma Metni</h3>
-          <span class="kvkk-badge">Bilgilendirme</span>
+      <!-- ========================================== -->
+      <!-- BÖLÜM 3: Bilet (Sonuç) -->
+      <!-- ========================================== -->
+      <div id="step3" class="hidden text-center">
+        
+        <!-- Bilet Kartı -->
+        <div class="bg-white rounded-xl shadow-xl overflow-hidden border border-gray-100 transform transition hover:scale-[1.02] duration-300">
+          
+          <!-- Bilet Başlık (Mavi Alan) -->
+          <div class="bg-blue-600 p-4 text-white relative overflow-hidden">
+            <div class="absolute -right-6 -top-6 text-7xl opacity-10">☁️</div>
+            <h3 class="font-bold text-lg tracking-widest uppercase">BİNİŞ KARTI</h3>
+            <p class="text-blue-200 text-[10px] uppercase font-bold tracking-wide">Bir Bulut Olsam Etkinlikleri</p>
+          </div>
+          
+          <!-- Bilet Gövde -->
+          <div class="p-6 flex flex-col gap-4 relative bg-white">
+            <!-- Sol ve Sağ Yırtık Efekti -->
+            <div class="absolute -left-3 top-[55%] w-6 h-6 bg-[#f0f7ff] rounded-full shadow-inner"></div>
+            <div class="absolute -right-3 top-[55%] w-6 h-6 bg-[#f0f7ff] rounded-full shadow-inner"></div>
+
+            <!-- Yolcu Adı -->
+            <div class="text-left border-b border-gray-100 pb-2">
+              <p class="text-[10px] text-gray-400 uppercase font-bold tracking-wider">YOLCU</p>
+              <p id="ticketName" class="font-bold text-gray-800 text-lg truncate">---</p>
+            </div>
+            
+            <!-- Etkinlik Detayı -->
+            <div class="flex justify-between items-end">
+              <div class="text-left w-2/3">
+                <p class="text-[10px] text-gray-400 uppercase font-bold tracking-wider">VARIŞ NOKTASI</p>
+                <p id="ticketEvent" class="font-bold text-blue-600 text-sm leading-tight mt-1">---</p>
+              </div>
+              <div class="text-right">
+                <p class="text-[10px] text-gray-400 uppercase font-bold tracking-wider">KAPI</p>
+                <p class="font-bold text-gray-800 text-2xl">01</p>
+              </div>
+            </div>
+
+            <!-- QR Kod -->
+            <div class="flex justify-center mt-3 bg-gray-50 p-3 rounded-lg border border-gray-100">
+              <div id="qrcode" class="mix-blend-multiply opacity-90"></div>
+            </div>
+            
+            <!-- Mesaj -->
+            <div class="mt-2 pt-2">
+              <p class="text-[10px] text-gray-400 uppercase font-bold tracking-wider mb-1">GÜNÜN BULUT MESAJI</p>
+              <p id="cloudMessage" class="text-sm font-medium text-blue-500 italic">
+                "..."
+              </p>
+            </div>
+
+          </div>
         </div>
-        <div class="kvkk-content">
-KİŞİSEL VERİLERİN KORUNMASI KANUNU KAPSAMINDA AYDINLATMA METNİ
-Bir Bulut Olsam Derneği ("Dernek") olarak, veri sorumlusu sıfatıyla, düzenlediğimiz etkinliklere katılımınız sırasında sizlerden elde edilen kişisel verilerinize büyük önem veriyoruz. (Özet metin; tam metin için iletişim kanallarımızdan talep edebilirsiniz.)
-        </div>
-        <div class="kvkk-controls">
-          <input id="kvkk" class="checkbox" type="checkbox" />
-          <label for="kvkk">KVKK metnini okudum, onay veriyorum.</label>
-        </div>
+        
+        <!-- Yeni Kayıt Linki -->
+        <button onclick="resetApp()" class="mt-8 text-blue-500 font-bold hover:text-blue-700 text-sm transition-colors flex items-center justify-center gap-1 mx-auto">
+          <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
+          </svg>
+          Yeni Bir Yolcu Kaydet
+        </button>
       </div>
 
-      <button class="btn" id="submitBtn" disabled>
-        <span id="btnText">Check-in Yap</span>
-      </button>
-      <div id="status" class="status"></div>
-    </div>
-
-    <div class="footer">
-      © 2025 Bir Bulut Olsam Derneği · 
-      <a href="#" id="openKvkk">KVKK Metni</a>
-    </div>
-  </div>
-
-  <!-- Success Modal -->
-  <div class="overlay" id="overlay" aria-hidden="true">
-    <div class="modal" role="dialog" aria-label="Kayıt Başarılı">
-      <canvas class="confetti" id="confetti"></canvas>
-      <div class="lead">KAYDINIZ YAPILDI</div>
-      <h2>Etkinliğe hoş geldiniz! 🎉</h2>
-      <p>Kaydınız başarıyla alındı. İyi ki aramızdasınız!</p>
-      <p class="sub" id="countdownText"></p>
-      <button class="btn-close" id="closePopup">Kapat</button>
     </div>
   </div>
 
   <script>
-    // Configuration
-    const WEBAPP_URL = "https://script.google.com/macros/s/AKfycbzyAj_Df_JyQHfZJ8bGP9r52qcNIUrZllZLOZ-GofaCwXhgSszQCyp0y8zDZyY1EFW0/exec";
-    const REFRESH_INTERVAL = 60000; // 60 seconds
+    // ----------------------------------------------------------------------
+    // GLOBAL DEĞİŞKENLER VE AYARLAR
+    // ----------------------------------------------------------------------
+    const cloudMessages = [
+      "Bugün gökyüzü senin için parlıyor! ☀️",
+      "Bir iyilik bin bulut getirir. ☁️",
+      "Gülümsemen en güzel güneş ışığıdır.",
+      "Bugün harika şeyler olacak, hisset!",
+      "Sen bir bulut kadar özgürsün.",
+      "İyilik paylaştıkça çoğalan tek şeydir.",
+      "Gökyüzüne bakmayı unutma!",
+      "Hafif ol, bulut gibi süzül."
+    ];
 
-    // Elements
-    const elEvent = document.getElementById('event');
-    const elName = document.getElementById('name');
-    const elPhone = document.getElementById('phone');
-    const elEmail = document.getElementById('email');
-    const elKvkk = document.getElementById('kvkk');
-    const elStatus = document.getElementById('status');
-    const btn = document.getElementById('submitBtn');
-    const btnText = document.getElementById('btnText');
-    const themeToggle = document.getElementById('themeToggle');
-    const themeIcon = document.getElementById('themeIcon');
-    const overlay = document.getElementById('overlay');
-    const closePopupBtn = document.getElementById('closePopup');
-    const countdownText = document.getElementById('countdownText');
-    const confettiCanvas = document.getElementById('confetti');
-
-    // State
-    let popupTimer = null;
-    let selectedMood = null;
-    let stars = [];
-
-    // ===== THEME =====
-    function initTheme() {
-      const savedTheme = localStorage.getItem('theme') || 'light';
-      document.documentElement.setAttribute('data-theme', savedTheme);
-      updateThemeIcon(savedTheme);
-    }
-
-    function toggleTheme() {
-      const current = document.documentElement.getAttribute('data-theme');
-      const newTheme = current === 'dark' ? 'light' : 'dark';
-      document.documentElement.setAttribute('data-theme', newTheme);
-      localStorage.setItem('theme', newTheme);
-      updateThemeIcon(newTheme);
-    }
-
-    function updateThemeIcon(theme) {
-      themeIcon.textContent = theme === 'dark' ? '☀️' : '🌙';
-    }
-
-    themeToggle.addEventListener('click', toggleTheme);
-
-    // ===== UTILITIES =====
-    function setStatus(msg, ok = false) {
-      elStatus.className = 'status ' + (ok ? 'ok' : 'err');
-      elStatus.textContent = msg || '';
-      if (msg) setTimeout(() => elStatus.textContent = '', 5000);
-    }
-
-    function validatePhone(p) {
-      const digits = (p || '').replace(/\D/g, '');
-      return digits.length >= 10;
-    }
-
-    function validateEmail(e) {
-      return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(e || '');
-    }
-
-    // ===== CONSTELLATION MAP =====
-    function initConstellation() {
-      const canvas = document.getElementById('constellationCanvas');
-      const width = canvas.offsetWidth;
-      const height = canvas.offsetHeight;
-      
-      // Generate 20 fixed stars
-      stars = [];
-      for (let i = 0; i < 20; i++) {
-        const star = document.createElement('div');
-        star.className = 'star';
-        star.style.left = Math.random() * (width - 10) + 'px';
-        star.style.top = Math.random() * (height - 10) + 'px';
-        
-        // Random twinkle delay
-        star.style.animationDelay = Math.random() * 3 + 's';
-        
-        canvas.appendChild(star);
-        stars.push({
-          element: star,
-          x: parseFloat(star.style.left),
-          y: parseFloat(star.style.top)
-        });
-      }
-      
-      // Draw constellation lines
-      drawConstellationLines();
-      
-      // Load participant names
-      loadConstellationData();
-    }
-    
-    async function loadConstellationData() {
-      try {
-        let url = WEBAPP_URL + '?action=participants&limit=20';
-        
-        let data;
-        try {
-          const res = await fetch(url);
-          data = await res.json();
-        } catch(_) {
-          // JSONP fallback
-          data = await new Promise((resolve) => {
-            const cb = 'participantsCb_' + Math.random().toString(36).slice(2);
-            window[cb] = (d) => { resolve(d); delete window[cb]; };
-            const s = document.createElement('script');
-            s.src = url + '&callback=' + cb;
-            document.body.appendChild(s);
-          });
-        }
-        
-        if (data.ok && data.participants) {
-          renderParticipantsList(data.participants);
-        }
-      } catch(err) {
-        console.error('Constellation load error:', err);
-      }
-    }
-    
-    function renderParticipantsList(participants) {
-      const listEl = document.getElementById('participantsList');
-      const subtitle = document.getElementById('constellationSubtitle');
-      
-      if (participants.length === 0) {
-        listEl.innerHTML = '<div class="participants-empty">Henüz katılımcı yok. İlk sen ol! 🌟</div>';
-        subtitle.textContent = 'Henüz kimse katılmadı!';
-        return;
-      }
-      
-      // Update subtitle
-      subtitle.textContent = `Son ${participants.length} katılımcımız ⭐`;
-      
-      // Render participants
-      const grid = document.createElement('div');
-      grid.className = 'participants-grid';
-      
-      participants.forEach((p, i) => {
-        const item = document.createElement('div');
-        item.className = 'participant-item';
-        item.textContent = (i + 1) + '. ' + p.name;
-        grid.appendChild(item);
-      });
-      
-      listEl.innerHTML = '';
-      listEl.appendChild(grid);
-    }
-
-    function drawConstellationLines() {
-      const canvas = document.getElementById('constellationCanvas');
-      
-      // Connect nearby stars
-      for (let i = 0; i < stars.length; i++) {
-        for (let j = i + 1; j < stars.length; j++) {
-          const dist = Math.sqrt(
-            Math.pow(stars[i].x - stars[j].x, 2) +
-            Math.pow(stars[i].y - stars[j].y, 2)
-          );
-          
-          if (dist < 100) {
-            const line = document.createElement('div');
-            line.className = 'star-line';
-            line.style.left = stars[i].x + 4 + 'px';
-            line.style.top = stars[i].y + 4 + 'px';
-            line.style.width = dist + 'px';
-            
-            const angle = Math.atan2(
-              stars[j].y - stars[i].y,
-              stars[j].x - stars[i].x
-            );
-            line.style.transform = `rotate(${angle}rad)`;
-            
-            canvas.appendChild(line);
-          }
-        }
-      }
-    }
-
-    // ===== MOOD SELECTOR =====
-    document.querySelectorAll('.mood-option').forEach(option => {
-      option.addEventListener('click', function() {
-        document.querySelectorAll('.mood-option').forEach(o => o.classList.remove('selected'));
-        this.classList.add('selected');
-        selectedMood = this.dataset.mood;
-        
-        const moodNames = {
-          happy: 'Mutlu',
-          excited: 'Heyecanlı',
-          cool: 'Havalı',
-          tired: 'Yorgun'
-        };
-        
-        document.getElementById('moodStats').textContent = 
-          `Harika! ${moodNames[selectedMood]} hissettiğini kaydettik! 🎉`;
-        
-        updateButton();
-      });
-    });
-    
-    async function loadMoodStats() {
-      const eventCode = elEvent.value;
-      if (!eventCode) {
-        document.getElementById('moodStats').textContent = 'Bir ruh hali seç ve check-in yap!';
-        return;
-      }
-      
-      try {
-        let url = WEBAPP_URL + '?action=moodStats&eventCode=' + eventCode;
-        
-        let data;
-        try {
-          const res = await fetch(url);
-          data = await res.json();
-        } catch(_) {
-          // JSONP fallback
-          data = await new Promise((resolve) => {
-            const cb = 'moodCb_' + Math.random().toString(36).slice(2);
-            window[cb] = (d) => { resolve(d); delete window[cb]; };
-            const s = document.createElement('script');
-            s.src = url + '&callback=' + cb;
-            document.body.appendChild(s);
-          });
-        }
-        
-        if (data.ok && data.moodStats) {
-          displayMoodStats(data.moodStats);
-        }
-      } catch(err) {
-        console.error('Mood stats load error:', err);
-      }
-    }
-    
-    function displayMoodStats(stats) {
-      const moodStatsEl = document.getElementById('moodStats');
-      
-      if (stats.total === 0) {
-        moodStatsEl.textContent = 'Bu etkinlikte henüz kimse mood seçmedi. İlk sen ol!';
-        return;
-      }
-      
-      const moodEmojis = {
-        happy: '😊',
-        excited: '🤗',
-        cool: '😎',
-        tired: '😴'
-      };
-      
-      const moodNames = {
-        happy: 'Mutlu',
-        excited: 'Heyecanlı',
-        cool: 'Havalı',
-        tired: 'Yorgun'
-      };
-      
-      // Find most popular mood
-      let maxMood = 'happy';
-      let maxCount = 0;
-      Object.keys(stats).forEach(mood => {
-        if (mood !== 'total' && stats[mood] > maxCount) {
-          maxCount = stats[mood];
-          maxMood = mood;
-        }
-      });
-      
-      // Build stats text
-      const statsText = Object.keys(moodEmojis)
-        .filter(mood => stats[mood] > 0)
-        .map(mood => `${moodEmojis[mood]} ${stats[mood]}`)
-        .join(' • ');
-      
-      if (maxCount > 0) {
-        const percentage = Math.round((maxCount / stats.total) * 100);
-        moodStatsEl.innerHTML = `
-          Bu etkinlikte <strong>%${percentage} ${moodNames[maxMood]}</strong> ${moodEmojis[maxMood]}<br>
-          <small style="opacity:0.8">${statsText} (${stats.total} kişi)</small>
-        `;
-      }
-    }
-
-    // ===== HEART PROGRESS =====
-    function updateHeart() {
-      let progress = 0;
-      let filledItems = [];
-      
-      // Mood selected = 20%
-      if (selectedMood) {
-        progress += 20;
-        filledItems.push('Ruh hali');
-      }
-      
-      // Event selected = 20%
-      if (elEvent.value) {
-        progress += 20;
-        filledItems.push('Etkinlik');
-      }
-      
-      // Name filled = 20%
-      if (elName.value.trim()) {
-        progress += 20;
-        filledItems.push('İsim');
-      }
-      
-      // Phone filled = 20%
-      if (validatePhone(elPhone.value)) {
-        progress += 20;
-        filledItems.push('Telefon');
-      }
-      
-      // Email filled = 20%
-      if (validateEmail(elEmail.value)) {
-        progress += 20;
-        filledItems.push('E-posta');
-      }
-      
-      heartProgress = progress;
-      
-      // Update heart visual
-      const clipRect = document.getElementById('clipRect');
-      const heartPercent = document.getElementById('heartPercent');
-      const heartLabel = document.getElementById('heartLabel');
-      
-      // Animate fill from bottom to top
-      const fillHeight = progress;
-      clipRect.setAttribute('y', 100 - fillHeight);
-      clipRect.setAttribute('height', fillHeight);
-      
-      heartPercent.textContent = progress + '%';
-      
-      // Update label
-      if (progress === 0) {
-        heartLabel.textContent = 'Formu doldurmaya başla!';
-      } else if (progress === 100) {
-        heartLabel.textContent = '💙 Kalp doldu! Artık check-in yapabilirsin!';
-        addHeartSparkle();
-      } else {
-        const remaining = 5 - filledItems.length;
-        heartLabel.textContent = `${filledItems.join(', ')} ✓ • ${remaining} alan kaldı`;
-      }
-      
-      // Update button state
-      updateButton();
-    }
-    
-    function addHeartSparkle() {
-      const container = document.getElementById('heartSparkles');
-      const emojis = ['✨', '💫', '⭐', '🌟', '💙'];
-      
-      for (let i = 0; i < 8; i++) {
-        setTimeout(() => {
-          const sparkle = document.createElement('div');
-          sparkle.className = 'sparkle';
-          sparkle.textContent = emojis[Math.floor(Math.random() * emojis.length)];
-          sparkle.style.left = Math.random() * 100 + '%';
-          sparkle.style.top = Math.random() * 100 + '%';
-          container.appendChild(sparkle);
-          
-          setTimeout(() => sparkle.remove(), 2000);
-        }, i * 100);
-      }
-    }
-
-    // ===== FORM VALIDATION =====
-    function updateButton() {
-      const ok = elEvent.value && 
-                 elName.value.trim() && 
-                 validatePhone(elPhone.value) && 
-                 validateEmail(elEmail.value) && 
-                 elKvkk.checked &&
-                 selectedMood;
-      btn.disabled = !ok;
-    }
-
-    elEvent.addEventListener('change', () => {
-      updateButton();
-      loadMoodStats();
-    });
-    elName.addEventListener('input', updateButton);
-    elPhone.addEventListener('input', updateButton);
-    elEmail.addEventListener('input', updateButton);
-    elKvkk.addEventListener('change', updateButton);
-
-    // ===== LOAD EVENTS =====
-    async function loadEventsFetch() {
-      const res = await fetch(WEBAPP_URL + "?action=events", { method: 'GET' });
-      return res.json();
-    }
-
-    function loadEventsJSONP() {
-      return new Promise((resolve, reject) => {
-        const cb = 'bboCb_' + Math.random().toString(36).slice(2);
-        window[cb] = (data) => { resolve(data); delete window[cb]; s.remove(); };
-        const s = document.createElement('script');
-        s.src = WEBAPP_URL + '?action=events&callback=' + cb;
-        s.onerror = () => { reject(new Error('JSONP failed')); s.remove(); delete window[cb]; };
-        document.body.appendChild(s);
-      });
-    }
-
-    async function loadEvents() {
-      try {
-        let data;
-        try {
-          data = await loadEventsFetch();
-        } catch (_) {
-          data = await loadEventsJSONP();
-        }
-
-        if (!data.ok) throw new Error(data.error || 'Bilinmeyen hata');
-
-        elEvent.innerHTML = '<option value="">Bir etkinlik seçin…</option>';
-        (data.events || []).forEach(ev => {
-          const opt = document.createElement('option');
-          opt.value = ev.eventCode;
-          opt.textContent = `${ev.eventName} (${ev.eventCode})`;
-          elEvent.appendChild(opt);
-        });
-
-        if ((data.events || []).length === 0) {
-          setStatus('Aktif etkinlik bulunamadı.', false);
-        } else {
-          setStatus('');
-        }
-
-        updateButton();
-      } catch (err) {
-        setStatus('Etkinlik listesi yüklenemedi: ' + err.message, false);
-      }
-    }
-
-    // ===== SUBMIT CHECK-IN =====
-    async function submitCheckin() {
-      setStatus('');
-      const eventCode = elEvent.value;
-      const name = elName.value.trim();
-      const phone = elPhone.value.trim();
-      const email = elEmail.value.trim();
-      const kvkk = elKvkk.checked;
-
-      if (!selectedMood) return setStatus('Lütfen ruh halinizi seçin.', false);
-      if (!eventCode) return setStatus('Lütfen bir etkinlik seçin.', false);
-      if (!name) return setStatus('Lütfen ad soyad girin.', false);
-      if (!validatePhone(phone)) return setStatus('Telefon formatı hatalı.', false);
-      if (!validateEmail(email)) return setStatus('Lütfen geçerli bir e-posta girin.', false);
-      if (!kvkk) return setStatus('KVKK onayı gereklidir.', false);
-
-      btn.disabled = true;
-      btnText.innerHTML = '<span class="spinner"></span> Kaydediliyor...';
-
-      try {
-        const body = new URLSearchParams({ 
-          eventCode, 
-          name, 
-          phone, 
-          email,
-          mood: selectedMood || ''
-        });
-        const res = await fetch(WEBAPP_URL, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/x-www-form-urlencoded;charset=UTF-8' },
-          body
-        });
-
-        const ok = res.ok ? await res.json().catch(() => ({ ok: true })) : null;
-
-        if (!res.ok || (ok && ok.ok === false)) {
-          throw new Error((ok && ok.error) || 'Sunucudan beklenmedik yanıt');
-        }
-
-        // Success
-        setStatus('Check-in başarılı! İyi etkinlikler! ☁️', true);
-
-        // Reload constellation and mood stats
-        await loadConstellationData();
-        await loadMoodStats();
-
-        // Reset form
-        elName.value = '';
-        elPhone.value = '';
-        elEmail.value = '';
-        elKvkk.checked = false;
-        document.querySelectorAll('.mood-option').forEach(o => o.classList.remove('selected'));
-        selectedMood = null;
-        updateButton();
-
-        // Show popup
-        showPopup();
-
-      } catch (err) {
-        setStatus('Gönderim hatası: ' + err.message, false);
-      } finally {
-        btn.disabled = false;
-        btnText.textContent = 'Check-in Yap';
-      }
-    }
-
-    btn.addEventListener('click', submitCheckin);
-
-    // ===== SUCCESS MODAL =====
-    function showPopup(autoCloseMs = 4000) {
-      overlay.classList.add('open');
-      overlay.setAttribute('aria-hidden', 'false');
-      startConfetti();
-      playSuccessSound();
-
-      if (popupTimer) clearInterval(popupTimer);
-      let ms = autoCloseMs;
-      countdownText.textContent = ms > 0 ? Math.ceil(ms / 1000) + " sn sonra kapanacak." : "";
-
-      if (ms > 0) {
-        popupTimer = setInterval(() => {
-          ms -= 1000;
-          if (ms <= 0) {
-            hidePopup();
-          } else {
-            countdownText.textContent = Math.ceil(ms / 1000) + " sn sonra kapanacak.";
-          }
-        }, 1000);
-      }
-    }
-
-    function hidePopup() {
-      overlay.classList.remove('open');
-      overlay.setAttribute('aria-hidden', 'true');
-      stopConfetti();
-      if (popupTimer) {
-        clearInterval(popupTimer);
-        popupTimer = null;
-      }
-    }
-
-    closePopupBtn.addEventListener('click', hidePopup);
-    overlay.addEventListener('click', (e) => {
-      if (e.target === overlay) hidePopup();
-    });
-
-    // ===== SUCCESS SOUND =====
-    function playSuccessSound() {
-      try {
-        const audioContext = new (window.AudioContext || window.webkitAudioContext)();
-        const notes = [523.25, 659.25, 783.99];
-
-        notes.forEach((freq, i) => {
-          const oscillator = audioContext.createOscillator();
-          const gainNode = audioContext.createGain();
-
-          oscillator.connect(gainNode);
-          gainNode.connect(audioContext.destination);
-
-          oscillator.frequency.value = freq;
-          oscillator.type = 'sine';
-
-          gainNode.gain.setValueAtTime(0.3, audioContext.currentTime + i * 0.1);
-          gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + i * 0.1 + 0.3);
-
-          oscillator.start(audioContext.currentTime + i * 0.1);
-          oscillator.stop(audioContext.currentTime + i * 0.1 + 0.3);
-        });
-      } catch (err) {
-        console.log('Audio playback failed:', err);
-      }
-    }
-
-    // ===== CONFETTI =====
-    let confettiRAF = null;
-    let pieces = [];
-
-    function startConfetti() {
-      const ctx = confettiCanvas.getContext('2d');
-      resizeConfetti();
-
-      pieces = Array.from({ length: 80 }).map(() => ({
-        x: Math.random() * confettiCanvas.width,
-        y: -Math.random() * confettiCanvas.height * 0.6,
-        r: Math.random() * 6 + 3,
-        vy: Math.random() * 3 + 1.5,
-        vx: (Math.random() - 0.5) * 2,
-        hue: Math.random() * 360,
-        rotation: Math.random() * Math.PI * 2,
-        rotationSpeed: (Math.random() - 0.5) * 0.2
-      }));
-
-      function step() {
-        ctx.clearRect(0, 0, confettiCanvas.width, confettiCanvas.height);
-
-        pieces.forEach(p => {
-          ctx.save();
-          ctx.translate(p.x, p.y);
-          ctx.rotate(p.rotation);
-
-          ctx.beginPath();
-          ctx.rect(-p.r / 2, -p.r / 2, p.r, p.r);
-          ctx.fillStyle = `hsl(${p.hue}, 85%, 60%)`;
-          ctx.fill();
-
-          ctx.restore();
-
-          p.y += p.vy;
-          p.x += p.vx;
-          p.rotation += p.rotationSpeed;
-
-          if (p.y > confettiCanvas.height + 10) {
-            p.y = -10;
-            p.x = Math.random() * confettiCanvas.width;
-          }
-        });
-
-        confettiRAF = requestAnimationFrame(step);
-      }
-
-      step();
-      window.addEventListener('resize', resizeConfetti);
-    }
-
-    function stopConfetti() {
-      if (confettiRAF) cancelAnimationFrame(confettiRAF);
-      confettiRAF = null;
-      window.removeEventListener('resize', resizeConfetti);
-    }
-
-    function resizeConfetti() {
-      const modal = document.querySelector('.modal');
-      confettiCanvas.width = modal.clientWidth;
-      confettiCanvas.height = modal.clientHeight;
-    }
-
-    // ===== KVKK LINK =====
-    document.getElementById('openKvkk').addEventListener('click', (e) => {
-      e.preventDefault();
-      const kvkkWrap = document.querySelector('.kvkk-wrap');
-      kvkkWrap.scrollIntoView({ behavior: 'smooth', block: 'center' });
-    });
-
-    // ===== INITIALIZATION =====
-    function init() {
-      initTheme();
-      initConstellation();
+    // ----------------------------------------------------------------------
+    // BAŞLANGIÇ (INIT)
+    // ----------------------------------------------------------------------
+    window.onload = function() {
+      // Sayfa yüklenince etkinlikleri çek
       loadEvents();
-      updateButton();
-      
-      // Auto-refresh constellation and mood stats every 60 seconds
-      setInterval(() => {
-        loadConstellationData(); // Refresh participant names
-        if (elEvent.value) {
-          loadMoodStats(); // Refresh mood stats
-        }
-      }, REFRESH_INTERVAL);
+    };
+
+    function loadEvents() {
+      const loader = document.getElementById('loadingEvents');
+      const list = document.getElementById('eventList');
+      const errorDiv = document.getElementById('errorState');
+
+      loader.classList.remove('hidden');
+      list.classList.add('hidden');
+      errorDiv.classList.add('hidden');
+
+      // Google Apps Script bağlantısı
+      if (typeof google === 'undefined') {
+        // Eğer yerel test yapılıyorsa (Mock Data)
+        console.warn("Google Script API bulunamadı, Mock data kullanılıyor.");
+        mockGetActiveEvents(); 
+      } else {
+        google.script.run
+          .withSuccessHandler(renderEvents)
+          .withFailureHandler((err) => {
+            console.error(err);
+            loader.classList.add('hidden');
+            errorDiv.classList.remove('hidden');
+            Swal.fire({
+              icon: 'error',
+              title: 'Hata',
+              text: 'Sunucu ile bağlantı kurulamadı. İnternet bağlantınızı kontrol edin.',
+              confirmButtonColor: '#3B82F6'
+            });
+          })
+          .getActiveEvents();
+      }
     }
 
-    // Start app
-    init();
+    // ----------------------------------------------------------------------
+    // DOM İŞLEMLERİ
+    // ----------------------------------------------------------------------
 
-    // Cleanup
-    window.addEventListener('beforeunload', () => {
-      if (popupTimer) clearInterval(popupTimer);
-    });
+    function renderEvents(events) {
+      const list = document.getElementById('eventList');
+      const loader = document.getElementById('loadingEvents');
+      
+      loader.classList.add('hidden');
+      list.classList.remove('hidden');
+      list.innerHTML = '';
 
-    // Prevent double-tap zoom on buttons (iOS)
-    document.addEventListener('touchend', function(e) {
-      const now = Date.now();
-      const lastTouch = this.lastTouch || 0;
-      if (now - lastTouch < 300) {
-        e.preventDefault();
+      if (!events || events.length === 0) {
+        list.innerHTML = `
+          <div class="text-center py-6 px-4 bg-gray-50 rounded-xl border border-dashed border-gray-300">
+            <p class="text-gray-500 font-medium">Şu an aktif bir uçuş rotası (etkinlik) bulunmuyor.</p>
+            <p class="text-xs text-gray-400 mt-1">Lütfen daha sonra tekrar kontrol edin.</p>
+          </div>
+        `;
+        return;
       }
-      this.lastTouch = now;
-    }, { passive: false });
+
+      events.forEach(evt => {
+        const btn = document.createElement('div');
+        // Erişilebilirlik ve Stil
+        btn.className = 'bg-white hover:bg-blue-50 border border-gray-100 hover:border-blue-300 rounded-xl p-4 cursor-pointer transition-all duration-200 flex items-center justify-between group shadow-sm hover:shadow-md mb-3 select-none';
+        btn.onclick = () => selectEvent(evt);
+        
+        btn.innerHTML = `
+          <div class="flex items-center gap-4">
+            <div class="bg-blue-100 text-blue-500 rounded-lg p-3 group-hover:bg-blue-500 group-hover:text-white transition-colors duration-300">
+              <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+              </svg>
+            </div>
+            <div>
+              <p class="font-bold text-gray-700 text-sm sm:text-base group-hover:text-blue-700 leading-tight">${evt.name}</p>
+              <p class="text-[10px] sm:text-xs text-gray-400 font-mono mt-1">UÇUŞ KODU: ${evt.code}</p>
+            </div>
+          </div>
+          <div class="text-gray-300 group-hover:text-blue-500 transition-colors transform group-hover:translate-x-1 duration-200">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+              <path fill-rule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clip-rule="evenodd" />
+            </svg>
+          </div>
+        `;
+        list.appendChild(btn);
+      });
+    }
+
+    function changeStep(stepNumber) {
+      // Tüm adımları gizle
+      ['step1', 'step2', 'step3'].forEach(id => {
+        document.getElementById(id).classList.add('hidden');
+        document.getElementById(id).classList.remove('slide-in');
+      });
+      
+      // Hedef adımı göster
+      const target = document.getElementById('step' + stepNumber);
+      target.classList.remove('hidden');
+      target.classList.add('slide-in');
+    }
+
+    function selectEvent(evt) {
+      document.getElementById('selectedEventCode').value = evt.code;
+      document.getElementById('selectedEventName').value = evt.name;
+      changeStep(2);
+      // Mobilde klavye açılmasın diye inputlara focus yapmıyoruz
+    }
+
+    function selectAvatar(emoji) {
+      document.querySelectorAll('.avatar-option').forEach(el => el.classList.remove('selected'));
+      event.currentTarget.classList.add('selected');
+      document.getElementById('selectedAvatar').value = emoji;
+    }
+
+    function handleSubmit(e) {
+      e.preventDefault();
+      
+      const btn = document.getElementById('submitBtn');
+      const originalContent = btn.innerHTML;
+      
+      // Buton Yükleniyor Hali
+      btn.disabled = true;
+      btn.classList.add('opacity-75', 'cursor-not-allowed');
+      btn.innerHTML = `
+        <span class="loader w-5 h-5 border-2 mr-2" style="width:20px; height:20px;"></span> 
+        <span>Kontrol Ediliyor...</span>
+      `;
+
+      // Form Verisi
+      const formData = {
+        eventCode: document.getElementById('selectedEventCode').value,
+        eventName: document.getElementById('selectedEventName').value,
+        fullName: document.getElementById('fullName').value.trim(),
+        phone: document.getElementById('phone').value.trim(),
+        email: document.getElementById('email').value.trim()
+      };
+      
+      const avatar = document.getElementById('selectedAvatar').value;
+
+      // Backend Çağrısı
+      const handleSuccess = (response) => {
+        btn.disabled = false;
+        btn.classList.remove('opacity-75', 'cursor-not-allowed');
+        btn.innerHTML = originalContent;
+        
+        if (response && response.success) {
+          showTicket(formData.fullName, formData.eventName, avatar);
+        } else {
+          Swal.fire({
+            icon: 'warning',
+            title: 'Dikkat',
+            text: response ? response.message : 'Bir hata oluştu.',
+            confirmButtonColor: '#3B82F6'
+          });
+        }
+      };
+
+      const handleFailure = (err) => {
+        btn.disabled = false;
+        btn.classList.remove('opacity-75', 'cursor-not-allowed');
+        btn.innerHTML = originalContent;
+        Swal.fire({
+            icon: 'error',
+            title: 'Hata',
+            text: err.message,
+            confirmButtonColor: '#3B82F6'
+        });
+      };
+
+      if (typeof google === 'undefined') {
+        mockRegister(formData, handleSuccess);
+      } else {
+        google.script.run
+          .withSuccessHandler(handleSuccess)
+          .withFailureHandler(handleFailure)
+          .registerParticipant(formData);
+      }
+    }
+
+    function showTicket(name, eventName, avatar) {
+      changeStep(3);
+      
+      // Bilet Metinleri
+      document.getElementById('ticketName').innerText = avatar + ' ' + name;
+      document.getElementById('ticketEvent').innerText = eventName;
+      
+      // Rastgele Mesaj
+      const randomMsg = cloudMessages[Math.floor(Math.random() * cloudMessages.length)];
+      document.getElementById('cloudMessage').innerText = `"${randomMsg}"`;
+
+      // QR Kod Temizle ve Oluştur
+      const qrContainer = document.getElementById("qrcode");
+      qrContainer.innerHTML = "";
+      
+      // Türkçe karakter sorununu önlemek için encodeURIComponent kullanabiliriz veya basitçe string birleştiririz.
+      // QRCode.js genelde UTF-8 destekler ama garanti olsun.
+      new QRCode(qrContainer, {
+        text: JSON.stringify({ name: name, event: eventName, date: new Date().toISOString() }),
+        width: 80,
+        height: 80,
+        colorDark : "#2563EB",
+        colorLight : "#ffffff",
+        correctLevel : QRCode.CorrectLevel.L
+      });
+
+      // --- KONFETİ EFEKTİ (5 SANİYE) ---
+      const duration = 5000;
+      const end = Date.now() + duration;
+      const colors = ['#60A5FA', '#93C5FD', '#FFFFFF', '#FCD34D'];
+
+      (function frame() {
+        confetti({
+          particleCount: 5,
+          angle: 60,
+          spread: 55,
+          origin: { x: 0 },
+          colors: colors,
+          zIndex: 9999
+        });
+        confetti({
+          particleCount: 5,
+          angle: 120,
+          spread: 55,
+          origin: { x: 1 },
+          colors: colors,
+          zIndex: 9999
+        });
+
+        if (Date.now() < end) {
+          requestAnimationFrame(frame);
+        }
+      }());
+    }
+
+    function resetApp() {
+      document.getElementById('checkinForm').reset();
+      
+      // Varsayılan avatarı seç (Bulut)
+      document.querySelectorAll('.avatar-option').forEach(el => el.classList.remove('selected'));
+      document.getElementById('av2').classList.add('selected');
+      document.getElementById('selectedAvatar').value = '🌥️';
+      
+      changeStep(1);
+    }
+
+    // ----------------------------------------------------------------------
+    // MOCK DATA (YALNIZCA TEST İÇİN - GOOGLE SUNUCUSUNDA ÇALIŞMAZ)
+    // ----------------------------------------------------------------------
+    function mockGetActiveEvents() {
+      console.log("Mock veri yükleniyor...");
+      setTimeout(() => {
+        renderEvents([
+          { code: 'TEST01', name: 'Tanışma Toplantısı (Test)' },
+          { code: 'TEST02', name: 'Kodlama Atölyesi (Test)' },
+          { code: 'TEST03', name: 'Doğa Yürüyüşü (Test)' }
+        ]);
+      }, 1000);
+    }
+
+    function mockRegister(data, callback) {
+      console.log("Mock kayıt gönderildi:", data);
+      setTimeout(() => {
+        callback({ success: true, message: 'Mock kayıt başarılı' });
+      }, 1500);
+    }
   </script>
 </body>
 </html>
